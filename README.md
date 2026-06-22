@@ -161,6 +161,18 @@ patch releases raise the MSRV past this crate's `rust-version` (1.86).
 
 ## Development
 
+A `Makefile` wraps the common workflows:
+
+```sh
+make test-unit   # cargo test --workspace (pure logic + Arrow-boundary tests)
+make test-sql    # build the release worker, run the DuckDB SQL E2E suite
+make test        # both of the above (the full local gate)
+make lint        # cargo clippy -D warnings + cargo fmt --check
+make fixtures    # regenerate the committed test/sql/data/* images
+```
+
+The underlying commands:
+
 ```sh
 cargo build --release          # build the worker binary
 cargo test --workspace         # unit + integration tests
@@ -172,10 +184,28 @@ The code splits into a pure-logic module (`src/imaging.rs` — all decode/EXIF/
 hash/resize/convert logic over `&[u8]`, fully unit-tested) and thin Arrow
 adapters (`src/scalar/*`, one module per function group, mirroring the
 `fixedformat` worker's layout). `src/arrow_io.rs` holds the shared BLOB-reading
-and MAP-building helpers.
+and MAP-building helpers, plus `#[cfg(test)] test_support` helpers that drive a
+`ScalarFunction` in-process (build an input batch, run `on_bind` + `process`,
+inspect the result array).
 
-Tests build a tiny RGB image in-memory and round-trip it through every function,
-and a hand-crafted EXIF/JPEG blob exercises the GPS-decode path end to end.
+### Testing layers
+
+* **Unit / Arrow boundary** (`cargo test`): the pure logic is unit-tested in
+  `imaging.rs`; each `scalar/*` module additionally drives its dispatch layer
+  in-process — NULL/empty/garbage/truncated BLOBs, NULL array elements, and the
+  STRUCT/MAP/UBIGINT/Binary builders producing exactly the `DataType` that
+  `on_bind` declares.
+* **SQL end-to-end** (`make test-sql`): `test/sql/*.test` are DuckDB
+  sqllogictest files run via [`haybarn-unittest`][hb] (`uv tool install
+  haybarn-unittest`). They `ATTACH` the compiled worker and exercise every
+  function over committed fixture images (`test/sql/data/`), which is the only
+  layer that crosses the real Arrow IPC boundary. The fixtures are regenerated
+  deterministically by `make fixtures` (the `gen_fixtures` example).
+
+[hb]: https://pypi.org/project/haybarn-unittest/
+
+A hand-crafted EXIF/JPEG blob also exercises the GPS-decode path end to end in
+`tests/exif_gps.rs`.
 
 After rebuilding the worker, `DETACH img; ATTACH …` in DuckDB to pick up the new
 binary.

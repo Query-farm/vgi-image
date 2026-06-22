@@ -1,0 +1,62 @@
+# name: test/sql/info.test
+# group: [vgi_image]
+#
+# image_info() over real fixture BLOBs: exercises the STRUCT(format, width,
+# height, color, has_alpha) marshalling end-to-end through the Arrow boundary.
+
+require-env VGI_IMAGE_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'img' AS img (TYPE vgi, LOCATION '${VGI_IMAGE_WORKER}');
+
+statement ok
+SET search_path = 'img.main';
+
+# PNG header decodes to a 160x120 rgb8 image with no alpha.
+query IIIII
+SELECT s.format, s.width, s.height, s.color, s.has_alpha
+FROM (SELECT image_info(content) AS s
+      FROM read_blob('test/sql/data/gradient.png')) t;
+----
+png	160	120	rgb8	false
+
+# JPEG header decodes to the same dimensions.
+query III
+SELECT s.format, s.width, s.height
+FROM (SELECT image_info(content) AS s
+      FROM read_blob('test/sql/data/gradient.jpg')) t;
+----
+jpeg	160	120
+
+# The GPS fixture is a valid JPEG too (EXIF APP1 doesn't break decoding).
+query III
+SELECT s.format, s.width, s.height
+FROM (SELECT image_info(content) AS s
+      FROM read_blob('test/sql/data/gps.jpg')) t;
+----
+jpeg	160	120
+
+# NULL input → NULL struct (no row-level error).
+query I
+SELECT image_info(NULL) IS NULL;
+----
+true
+
+# Garbage bytes surface an error rather than silently succeeding.
+statement error
+SELECT image_info('not an image'::BLOB);
+----
+
+# Empty BLOB also errors (no decodable header).
+statement error
+SELECT image_info(''::BLOB);
+----
+
+statement ok
+USE memory;
+
+statement ok
+DETACH img;

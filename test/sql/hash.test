@@ -1,0 +1,96 @@
+# name: test/sql/hash.test
+# group: [vgi_image]
+#
+# phash/dhash/ahash → UBIGINT and phash_distance(a, b) → INT. Exercises the
+# UInt64 builder and the integer-argument unmarshalling across the Arrow boundary.
+
+require-env VGI_IMAGE_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'img' AS img (TYPE vgi, LOCATION '${VGI_IMAGE_WORKER}');
+
+statement ok
+SET search_path = 'img.main';
+
+# All three hashes return a UBIGINT (64-bit) and are deterministic.
+query I
+SELECT phash(content) = phash(content) FROM read_blob('test/sql/data/gradient.png');
+----
+true
+
+query III
+SELECT typeof(phash(content)), typeof(dhash(content)), typeof(ahash(content))
+FROM read_blob('test/sql/data/gradient.png');
+----
+UBIGINT	UBIGINT	UBIGINT
+
+# Pure integer scalar: identical hashes have zero Hamming distance.
+query I
+SELECT phash_distance(0, 0);
+----
+0
+
+query I
+SELECT phash_distance(7, 0);
+----
+3
+
+# Max distance is 64 bits.
+query I
+SELECT phash_distance(18446744073709551615::UBIGINT, 0);
+----
+64
+
+# Non-integer arguments are rejected (the worker only accepts integer hashes;
+# a bare 20-digit literal binds as DECIMAL in DuckDB).
+statement error
+SELECT phash_distance(18446744073709551615, 0);
+----
+
+# A hash is zero distance from itself when read back from the same image.
+query I
+SELECT phash_distance(phash(content), phash(content)) FROM read_blob('test/sql/data/gradient.png');
+----
+0
+
+# The PNG and its JPEG re-encoding are perceptually close: small (not huge)
+# Hamming distance. (Exact value depends on the codec; assert "small".)
+query I
+SELECT phash_distance(
+         phash((SELECT content FROM read_blob('test/sql/data/gradient.png'))),
+         phash((SELECT content FROM read_blob('test/sql/data/gradient.jpg')))
+       ) < 24;
+----
+true
+
+# Round-trip a thumbnail and assert it stays perceptually close to the original.
+query I
+SELECT phash_distance(phash(content), phash(thumbnail(content))) < 24
+FROM read_blob('test/sql/data/gradient.png');
+----
+true
+
+# NULL propagates to NULL.
+query I
+SELECT phash(NULL) IS NULL;
+----
+true
+
+query I
+SELECT phash_distance(NULL, 0) IS NULL;
+----
+true
+
+# Garbage bytes error rather than returning a bogus hash.
+statement error
+SELECT phash('not an image'::BLOB);
+----
+
+statement ok
+USE memory;
+
+statement ok
+DETACH img;

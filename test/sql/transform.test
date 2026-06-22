@@ -1,0 +1,89 @@
+# name: test/sql/transform.test
+# group: [vgi_image]
+#
+# thumbnail(blob) and convert(blob, format) → BLOB. Exercises the Binary builder
+# and the positional const-string argument across the Arrow boundary, re-feeding
+# the produced BLOB back into image_info to validate it is a real image.
+
+require-env VGI_IMAGE_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'img' AS img (TYPE vgi, LOCATION '${VGI_IMAGE_WORKER}');
+
+statement ok
+SET search_path = 'img.main';
+
+# thumbnail() returns a non-empty BLOB.
+query I
+SELECT octet_length(thumbnail(content)) > 0 FROM read_blob('test/sql/data/gradient.png');
+----
+true
+
+# The thumbnail is a valid JPEG (default format) fitting within 128x128,
+# aspect-preserved from 160x120 → 128x96.
+query III
+SELECT s.format, s.width, s.height
+FROM (SELECT image_info(thumbnail(content)) AS s
+      FROM read_blob('test/sql/data/gradient.png')) t;
+----
+jpeg	128	96
+
+# The thumbnail is strictly smaller (in bytes) than the source PNG.
+query I
+SELECT octet_length(thumbnail(content)) < octet_length(content)
+FROM read_blob('test/sql/data/gradient.png');
+----
+true
+
+# convert() changes the container format while keeping full resolution.
+query III
+SELECT s.format, s.width, s.height
+FROM (SELECT image_info(convert(content, 'bmp')) AS s
+      FROM read_blob('test/sql/data/gradient.png')) t;
+----
+bmp	160	120
+
+# convert PNG → PNG is a no-op format-wise but still re-encodes a valid image.
+query I
+SELECT (image_info(convert(content, 'png'))).format
+FROM read_blob('test/sql/data/gradient.png');
+----
+png
+
+# convert JPEG → TIFF keeps dimensions.
+query III
+SELECT s.format, s.width, s.height
+FROM (SELECT image_info(convert(content, 'tiff')) AS s
+      FROM read_blob('test/sql/data/gradient.jpg')) t;
+----
+tiff	160	120
+
+# NULL input → NULL BLOB.
+query I
+SELECT thumbnail(NULL) IS NULL;
+----
+true
+
+query I
+SELECT convert(NULL, 'png') IS NULL;
+----
+true
+
+# An unknown target format is rejected at bind time.
+statement error
+SELECT convert(content, 'xyz') FROM read_blob('test/sql/data/gradient.png');
+----
+
+# Garbage bytes error rather than producing a corrupt BLOB.
+statement error
+SELECT convert('not an image'::BLOB, 'png');
+----
+
+statement ok
+USE memory;
+
+statement ok
+DETACH img;

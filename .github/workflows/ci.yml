@@ -39,3 +39,27 @@ jobs:
 
       - name: Build worker (release)
         run: cargo build --release --bin image-worker
+
+  e2e-sql:
+    name: SQL end-to-end (DuckDB sqllogictest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install haybarn-unittest
+        run: uv tool install haybarn-unittest
+
+      - name: SQL E2E (build release worker + run sqllogictest suite)
+        # `make test-sql` builds target/release/image-worker first, then points
+        # VGI_IMAGE_WORKER at it and runs the test/sql/*.test suite.
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          make test-sql

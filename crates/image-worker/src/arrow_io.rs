@@ -82,3 +82,109 @@ pub fn finish_map(mut builder: MapBuilder<StringBuilder, StringBuilder>) -> Arra
     let arr: MapArray = builder.finish();
     Arc::new(arr)
 }
+
+/// Test-only helpers shared by the scalar Arrow-boundary unit tests. These let a
+/// `#[cfg(test)]` block drive a `ScalarFunction` end to end in-process (build a
+/// one-column input `RecordBatch`, run `on_bind` + `process`, inspect the result)
+/// without the RPC/IPC plumbing.
+#[cfg(test)]
+pub mod test_support {
+    use std::sync::Arc;
+
+    use arrow_array::builder::BinaryBuilder;
+    use arrow_array::{ArrayRef, RecordBatch};
+    use arrow_schema::{Field, Schema, SchemaRef};
+    use vgi::arguments::Arguments;
+    use vgi::{BindParams, ProcessParams, ScalarFunction};
+    use vgi_rpc::Result;
+
+    /// A tiny in-memory PNG (`w`×`h`, diagonal gradient) for decode-path tests.
+    pub fn make_png(w: u32, h: u32) -> Vec<u8> {
+        use image::{DynamicImage, ImageFormat, Rgb, RgbImage};
+        use std::io::Cursor;
+        let mut img = RgbImage::new(w, h);
+        for y in 0..h {
+            for x in 0..w {
+                let v = ((x + y) * 255 / (w + h)) as u8;
+                img.put_pixel(x, y, Rgb([v, 255 - v, (x * 13 % 256) as u8]));
+            }
+        }
+        let mut buf = Cursor::new(Vec::new());
+        DynamicImage::ImageRgb8(img)
+            .write_to(&mut buf, ImageFormat::Png)
+            .unwrap();
+        buf.into_inner()
+    }
+
+    /// A single-column `Binary` (BLOB) input batch. `None` entries become NULLs.
+    pub fn blob_batch(rows: &[Option<&[u8]>]) -> RecordBatch {
+        let mut b = BinaryBuilder::new();
+        for r in rows {
+            match r {
+                Some(bytes) => b.append_value(bytes),
+                None => b.append_null(),
+            }
+        }
+        let arr: ArrayRef = Arc::new(b.finish());
+        let schema = Arc::new(Schema::new(vec![Field::new(
+            "blob",
+            arr.data_type().clone(),
+            true,
+        )]));
+        RecordBatch::try_new(schema, vec![arr]).unwrap()
+    }
+
+    /// Build a `ProcessParams` carrying the given output schema and arguments.
+    pub fn process_params(output_schema: SchemaRef, arguments: Arguments) -> ProcessParams {
+        ProcessParams {
+            output_schema,
+            input_schema: None,
+            execution_id: Vec::new(),
+            init_opaque_data: Vec::new(),
+            arguments,
+            settings: Default::default(),
+            secrets: Default::default(),
+            auth_principal: None,
+            projection_ids: None,
+            pushdown_filters: None,
+            join_keys: Vec::new(),
+            storage: None,
+            order_by_column: None,
+            order_by_direction: None,
+            order_by_null_order: None,
+            order_by_limit: None,
+            tablesample_percentage: None,
+            tablesample_seed: None,
+            attach_opaque_data: None,
+            at_unit: None,
+            at_value: None,
+        }
+    }
+
+    /// Run a scalar function over a `Binary` input batch: call `on_bind` to obtain
+    /// the declared output schema, then `process`, returning the single result
+    /// column. The `arguments` apply to both bind and process.
+    pub fn run_scalar<F: ScalarFunction>(
+        f: &F,
+        rows: &[Option<&[u8]>],
+        arguments: Arguments,
+    ) -> Result<ArrayRef> {
+        let batch = blob_batch(rows);
+        let bind = BindParams {
+            input_schema: Some(batch.schema()),
+            arguments: arguments.clone(),
+            ..Default::default()
+        };
+        let bound = f.on_bind(&bind)?;
+        let params = process_params(bound.output_schema.clone(), arguments);
+        let out = f.process(&params, &batch)?;
+        Ok(out.column(0).clone())
+    }
+
+    /// The declared output `DataType` from `on_bind` for a single-BLOB-arg scalar.
+    pub fn bound_type<F: ScalarFunction>(f: &F) -> arrow_schema::DataType {
+        let bind = BindParams::default();
+        let bound = f.on_bind(&bind).unwrap();
+        bound.output_schema.field(0).data_type().clone()
+    }
+}

@@ -1,0 +1,66 @@
+# name: test/sql/exif.test
+# group: [vgi_image]
+#
+# exif() → MAP(VARCHAR, VARCHAR) and exif_gps() → STRUCT(lat, lon). Exercises the
+# MAP and STRUCT(DOUBLE, DOUBLE) Arrow builders end-to-end.
+
+require-env VGI_IMAGE_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'img' AS img (TYPE vgi, LOCATION '${VGI_IMAGE_WORKER}');
+
+statement ok
+SET search_path = 'img.main';
+
+# The GPS fixture carries exactly four EXIF tags (lat/lon + their refs).
+query I
+SELECT cardinality(exif(content)) FROM read_blob('test/sql/data/gps.jpg');
+----
+4
+
+# Keys come back as a real MAP we can index/sort.
+query I
+SELECT list_sort(map_keys(exif(content))) FROM read_blob('test/sql/data/gps.jpg');
+----
+[GPSLatitude, GPSLatitudeRef, GPSLongitude, GPSLongitudeRef]
+
+# Map values are the human-readable EXIF display strings.
+query I
+SELECT exif(content)['GPSLatitudeRef'][1] FROM read_blob('test/sql/data/gps.jpg');
+----
+N
+
+# A PNG with no EXIF yields an empty (non-null) map, not an error.
+query II
+SELECT exif(content) IS NULL, cardinality(exif(content))
+FROM read_blob('test/sql/data/gradient.png');
+----
+false	0
+
+# exif_gps decodes signed decimal degrees (37°48'30"N, 122°25'9"W).
+query II
+SELECT round(g.lat, 4), round(g.lon, 4)
+FROM (SELECT exif_gps(content) AS g FROM read_blob('test/sql/data/gps.jpg')) t;
+----
+37.8083	-122.4192
+
+# No GPS → NULL struct.
+query I
+SELECT exif_gps(content) IS NULL FROM read_blob('test/sql/data/gradient.png');
+----
+true
+
+# NULL input → NULL / empty handled gracefully.
+query I
+SELECT exif_gps(NULL) IS NULL;
+----
+true
+
+statement ok
+USE memory;
+
+statement ok
+DETACH img;

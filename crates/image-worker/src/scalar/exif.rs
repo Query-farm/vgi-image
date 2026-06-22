@@ -125,3 +125,61 @@ impl ScalarFunction for ExifGps {
             .map_err(|e| RpcError::runtime_error(e.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::arrow_io::map_varchar_varchar_type;
+    use crate::arrow_io::test_support::{bound_type, make_png, run_scalar};
+    use arrow_array::cast::AsArray;
+    use arrow_array::Array;
+    use vgi::arguments::Arguments;
+
+    #[test]
+    fn exif_bind_matches_built_map_type() {
+        // The declared MAP DataType must equal what the MapBuilder produces.
+        assert_eq!(bound_type(&Exif), map_varchar_varchar_type());
+    }
+
+    #[test]
+    fn exif_gps_bind_declares_struct() {
+        assert_eq!(bound_type(&ExifGps), DataType::Struct(gps_fields()));
+    }
+
+    #[test]
+    fn exif_on_png_is_empty_map_not_null() {
+        let png = make_png(16, 16);
+        let out = run_scalar(&Exif, &[Some(&png)], Arguments::default()).unwrap();
+        assert_eq!(out.data_type(), &map_varchar_varchar_type());
+        let m = out.as_map();
+        assert!(!m.is_null(0), "no-EXIF input → empty (non-null) map");
+        assert_eq!(m.value(0).len(), 0);
+    }
+
+    #[test]
+    fn exif_null_element_is_null_map() {
+        let png = make_png(8, 8);
+        let out = run_scalar(&Exif, &[Some(&png), None], Arguments::default()).unwrap();
+        let m = out.as_map();
+        assert!(!m.is_null(0));
+        assert!(m.is_null(1), "NULL input → NULL map row");
+    }
+
+    #[test]
+    fn exif_garbage_is_empty_map_not_error() {
+        // EXIF parse is best-effort: non-image bytes simply carry no EXIF.
+        let out = run_scalar(&Exif, &[Some(b"not an image")], Arguments::default()).unwrap();
+        let m = out.as_map();
+        assert!(!m.is_null(0));
+        assert_eq!(m.value(0).len(), 0);
+    }
+
+    #[test]
+    fn exif_gps_absent_is_null_struct() {
+        let png = make_png(16, 16);
+        let out = run_scalar(&ExifGps, &[Some(&png), None], Arguments::default()).unwrap();
+        assert_eq!(out.data_type(), &DataType::Struct(gps_fields()));
+        assert!(out.is_null(0), "no GPS → NULL struct");
+        assert!(out.is_null(1), "NULL input → NULL struct");
+    }
+}

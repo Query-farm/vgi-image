@@ -153,3 +153,87 @@ impl ScalarFunction for Convert {
             .map_err(|e| RpcError::runtime_error(e.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::arrow_io::test_support::{bound_type, make_png, run_scalar};
+    use crate::imaging;
+    use arrow_array::cast::AsArray;
+    use arrow_array::{Array, StringArray};
+    use vgi::arguments::Arguments;
+
+    /// Build the positional const-arguments blob `(blob, format)` that DuckDB
+    /// would hand `convert` (positional_0 = blob placeholder, positional_1 =
+    /// the format string).
+    fn convert_args(format: &str) -> Arguments {
+        let blob: ArrayRef = Arc::new(StringArray::from(vec![Some("blob")]));
+        let fmt: ArrayRef = Arc::new(StringArray::from(vec![Some(format)]));
+        let bytes = Arguments::serialize_positional(&[blob, fmt]).unwrap();
+        Arguments::parse(&bytes).unwrap()
+    }
+
+    #[test]
+    fn thumbnail_and_convert_bind_binary() {
+        // Thumbnail binds with no required args.
+        assert_eq!(bound_type(&Thumbnail), DataType::Binary);
+        // Convert validates its format constant at bind, so it needs the args.
+        let bind = vgi::BindParams {
+            arguments: convert_args("png"),
+            ..Default::default()
+        };
+        let bound = Convert.on_bind(&bind).unwrap();
+        assert_eq!(bound.output_schema.field(0).data_type(), &DataType::Binary);
+    }
+
+    #[test]
+    fn thumbnail_produces_a_smaller_valid_image() {
+        let png = make_png(160, 120);
+        let out = run_scalar(&Thumbnail, &[Some(&png)], Arguments::default()).unwrap();
+        assert_eq!(out.data_type(), &DataType::Binary);
+        let bytes = out.as_binary::<i32>().value(0);
+        // Re-feed the produced BLOB into the decoder: it must be a real image
+        // that fits within the default 128x128 box (default format is jpeg).
+        let info = imaging::image_info(bytes).unwrap();
+        assert_eq!(info.format, "jpeg");
+        assert!(info.width <= 128 && info.height <= 128);
+        assert!(info.width < 160, "thumbnail should have shrunk the source");
+    }
+
+    #[test]
+    fn thumbnail_null_and_garbage() {
+        let png = make_png(32, 32);
+        let out = run_scalar(&Thumbnail, &[Some(&png), None], Arguments::default()).unwrap();
+        assert!(!out.is_null(0));
+        assert!(out.is_null(1));
+        assert!(run_scalar(&Thumbnail, &[Some(b"")], Arguments::default()).is_err());
+        assert!(run_scalar(&Thumbnail, &[Some(b"nope")], Arguments::default()).is_err());
+    }
+
+    #[test]
+    fn convert_changes_format_and_keeps_dimensions() {
+        let png = make_png(40, 30);
+        let out = run_scalar(&Convert, &[Some(&png)], convert_args("bmp")).unwrap();
+        let bytes = out.as_binary::<i32>().value(0);
+        let info = imaging::image_info(bytes).unwrap();
+        assert_eq!(info.format, "bmp");
+        assert_eq!((info.width, info.height), (40, 30));
+    }
+
+    #[test]
+    fn convert_bad_format_errors_at_bind() {
+        // on_bind validates the format constant eagerly.
+        let bind = vgi::BindParams {
+            arguments: convert_args("xyz"),
+            ..Default::default()
+        };
+        assert!(Convert.on_bind(&bind).is_err());
+    }
+
+    #[test]
+    fn convert_null_and_garbage() {
+        let out = run_scalar(&Convert, &[None], convert_args("png")).unwrap();
+        assert!(out.is_null(0));
+        assert!(run_scalar(&Convert, &[Some(b"")], convert_args("png")).is_err());
+    }
+}

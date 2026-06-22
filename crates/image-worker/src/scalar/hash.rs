@@ -157,3 +157,142 @@ impl ScalarFunction for PhashDistance {
             .map_err(|e| RpcError::runtime_error(e.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::arrow_io::test_support::{
+        blob_batch, bound_type, make_png, process_params, run_scalar,
+    };
+    use arrow_array::builder::UInt64Builder;
+    use arrow_array::cast::AsArray;
+    use arrow_array::types::UInt64Type;
+    use vgi::arguments::Arguments;
+    use vgi::{BindParams, ScalarFunction};
+
+    #[test]
+    fn bind_declares_ubigint() {
+        for f in [
+            PerceptualHash::phash(),
+            PerceptualHash::dhash(),
+            PerceptualHash::ahash(),
+        ] {
+            assert_eq!(bound_type(&f), DataType::UInt64);
+        }
+        assert_eq!(bound_type(&PhashDistance), DataType::Int32);
+    }
+
+    #[test]
+    fn phash_of_png_is_deterministic_and_u64() {
+        let png = make_png(40, 40);
+        let h1 = run_scalar(
+            &PerceptualHash::phash(),
+            &[Some(&png)],
+            Arguments::default(),
+        )
+        .unwrap();
+        let h2 = run_scalar(
+            &PerceptualHash::phash(),
+            &[Some(&png)],
+            Arguments::default(),
+        )
+        .unwrap();
+        assert_eq!(h1.data_type(), &DataType::UInt64);
+        let a = h1.as_primitive::<UInt64Type>().value(0);
+        let b = h2.as_primitive::<UInt64Type>().value(0);
+        assert_eq!(a, b, "phash must be deterministic across calls");
+    }
+
+    #[test]
+    fn null_and_garbage_handling() {
+        let png = make_png(16, 16);
+        // NULL element → NULL hash, valid element alongside still works.
+        let out = run_scalar(
+            &PerceptualHash::phash(),
+            &[Some(&png), None],
+            Arguments::default(),
+        )
+        .unwrap();
+        assert!(!out.is_null(0));
+        assert!(out.is_null(1));
+        // Garbage / empty / truncated → error.
+        for bad in [&b""[..], &b"nope"[..], &png[..30.min(png.len())]] {
+            assert!(
+                run_scalar(&PerceptualHash::phash(), &[Some(bad)], Arguments::default()).is_err(),
+                "expected error for {} bytes",
+                bad.len()
+            );
+        }
+    }
+
+    /// `phash_distance` takes two integer columns; build them directly and run.
+    fn distance(a: &[Option<u64>], b: &[Option<u64>]) -> ArrayRef {
+        use arrow_array::RecordBatch;
+        use arrow_schema::{Field, Schema};
+        let mk = |vals: &[Option<u64>]| {
+            let mut x = UInt64Builder::new();
+            for v in vals {
+                match v {
+                    Some(n) => x.append_value(*n),
+                    None => x.append_null(),
+                }
+            }
+            Arc::new(x.finish()) as ArrayRef
+        };
+        let ca = mk(a);
+        let cb = mk(b);
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("a", DataType::UInt64, true),
+            Field::new("b", DataType::UInt64, true),
+        ]));
+        let batch = RecordBatch::try_new(schema.clone(), vec![ca, cb]).unwrap();
+        let bind = BindParams {
+            input_schema: Some(schema),
+            ..Default::default()
+        };
+        let bound = PhashDistance.on_bind(&bind).unwrap();
+        let params = process_params(bound.output_schema, Arguments::default());
+        PhashDistance
+            .process(&params, &batch)
+            .unwrap()
+            .column(0)
+            .clone()
+    }
+
+    #[test]
+    fn distance_basics_and_nulls() {
+        let out = distance(
+            &[Some(0), Some(0b1011), Some(u64::MAX), Some(7), None],
+            &[Some(0), Some(0b0001), Some(0), None, Some(0)],
+        );
+        let d = out.as_primitive::<arrow_array::types::Int32Type>();
+        assert_eq!(d.value(0), 0);
+        assert_eq!(d.value(1), 2);
+        assert_eq!(d.value(2), 64);
+        assert!(out.is_null(3), "NULL operand → NULL distance");
+        assert!(out.is_null(4));
+    }
+
+    #[test]
+    fn distance_rejects_non_integer_arg() {
+        // A Utf8 input column is not an integer hash → error.
+        use arrow_array::RecordBatch;
+        use arrow_array::StringArray;
+        use arrow_schema::{Field, Schema};
+        let a: ArrayRef = Arc::new(StringArray::from(vec!["x"]));
+        let b: ArrayRef = blob_batch(&[Some(b"")]).column(0).clone();
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("a", a.data_type().clone(), true),
+            Field::new("b", b.data_type().clone(), true),
+        ]));
+        let batch = RecordBatch::try_new(schema, vec![a, b]).unwrap();
+        let params = process_params(
+            PhashDistance
+                .on_bind(&BindParams::default())
+                .unwrap()
+                .output_schema,
+            Arguments::default(),
+        );
+        assert!(PhashDistance.process(&params, &batch).is_err());
+    }
+}

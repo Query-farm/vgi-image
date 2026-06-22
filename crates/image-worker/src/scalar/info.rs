@@ -98,3 +98,57 @@ impl ScalarFunction for ImageInfo {
             .map_err(|e| RpcError::runtime_error(e.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::arrow_io::test_support::{bound_type, make_png, run_scalar};
+    use arrow_array::cast::AsArray;
+    use arrow_array::types::Int32Type;
+    use arrow_array::Array;
+    use vgi::arguments::Arguments;
+
+    #[test]
+    fn bind_declares_the_struct_the_process_builds() {
+        // The DataType published at bind must equal the array's at process.
+        assert_eq!(bound_type(&ImageInfo), DataType::Struct(struct_fields()));
+    }
+
+    #[test]
+    fn process_decodes_a_png_into_struct_fields() {
+        let png = make_png(20, 12);
+        let out = run_scalar(&ImageInfo, &[Some(&png)], Arguments::default()).unwrap();
+        let s = out.as_struct();
+        assert_eq!(out.data_type(), &DataType::Struct(struct_fields()));
+        assert_eq!(s.column(0).as_string::<i32>().value(0), "png");
+        assert_eq!(s.column(1).as_primitive::<Int32Type>().value(0), 20);
+        assert_eq!(s.column(2).as_primitive::<Int32Type>().value(0), 12);
+    }
+
+    #[test]
+    fn null_element_yields_null_struct_row() {
+        let png = make_png(8, 8);
+        let out = run_scalar(&ImageInfo, &[Some(&png), None], Arguments::default()).unwrap();
+        assert!(!out.is_null(0));
+        assert!(out.is_null(1), "NULL input must produce a NULL struct row");
+    }
+
+    #[test]
+    fn garbage_bytes_surface_an_error() {
+        let err = run_scalar(&ImageInfo, &[Some(b"not an image")], Arguments::default());
+        assert!(err.is_err(), "garbage bytes must error");
+    }
+
+    #[test]
+    fn empty_blob_errors() {
+        assert!(run_scalar(&ImageInfo, &[Some(b"")], Arguments::default()).is_err());
+    }
+
+    #[test]
+    fn truncated_image_errors() {
+        // First 40 bytes of a real PNG: header present, pixel data missing.
+        let png = make_png(16, 16);
+        let truncated = &png[..40.min(png.len())];
+        assert!(run_scalar(&ImageInfo, &[Some(truncated)], Arguments::default()).is_err());
+    }
+}

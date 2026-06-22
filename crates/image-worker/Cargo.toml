@@ -1,0 +1,30 @@
+[package]
+name = "image-worker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "VGI worker bringing image decode, EXIF, perceptual hashing, thumbnails and format conversion to DuckDB over Apache Arrow"
+
+[[bin]]
+name = "image-worker"
+path = "src/main.rs"
+
+[dependencies]
+vgi.workspace = true
+vgi-rpc.workspace = true
+arrow-array.workspace = true
+arrow-buffer.workspace = true
+arrow-schema.workspace = true
+image.workspace = true
+kamadak-exif.workspace = true
+image_hasher.workspace = true
+log = "0.4"
+env_logger = "0.11"
+
+[dev-dependencies]
+# Integration tests build a hand-crafted EXIF/JPEG blob and parse it the same way
+# the worker does, so they need the `exif` crate directly.
+kamadak-exif.workspace = true

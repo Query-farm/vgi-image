@@ -1,0 +1,36 @@
+[workspace]
+resolver = "2"
+members = ["crates/image-worker"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+license = "MIT"
+authors = ["Query Farm LLC <hello@query.farm>"]
+repository = "https://github.com/Query-farm/vgi-image"
+
+[workspace.dependencies]
+# VGI Rust SDK (worker side), published on crates.io. Pulls in vgi-rpc 0.2 and
+# arrow 58 transitively; keep arrow/vgi-rpc here in lockstep with vgi's pins so a
+# single arrow/vgi-rpc resolves.
+vgi = "0.5.0"
+vgi-rpc = { version = "0.2.0", default-features = false, features = ["macros", "http"] }
+arrow-array = "58"
+arrow-buffer = "58"
+arrow-schema = "58"
+
+# Image decode / encode / resize. Pinned to 0.25.9 because 0.25.10 bumps the MSRV
+# past our rust-version (1.86). Default features (incl. AVIF via the heavy
+# ravif/rav1e chain) are off; we enable just the common web/photo formats.
+image = { version = "=0.25.9", default-features = false, features = [
+    "png", "jpeg", "gif", "bmp", "tiff", "webp",
+] }
+# EXIF metadata parsing (the `exif` crate is published as `kamadak-exif`).
+kamadak-exif = "0.6"
+# Perceptual hashing (aHash / dHash / pHash via DCT), built on `image`. Pinned to
+# 3.0.0 because 3.1.x bumps the MSRV past our rust-version (1.86).
+image_hasher = "=3.0.0"
+
+[profile.release]
+opt-level = 2

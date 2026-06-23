@@ -4,7 +4,9 @@
 
 <p align="center"><em>A <a href="https://query.farm">Query.Farm</a> VGI worker for DuckDB.</em></p>
 
-# vgi-image
+# Image Info, EXIF/GPS, Perceptual Hashing & Thumbnails in DuckDB
+
+> **vgi-image** · a [Query.Farm](https://query.farm) VGI worker
 
 Decode images, read **EXIF**, compute **perceptual hashes**, make **thumbnails**
 and **convert formats** inside DuckDB — with SQL, over plain `BLOB` columns.

@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="docs/vgi-logo.png" alt="Vector Gateway Interface (VGI)" width="320">
+</p>
+
+<p align="center"><em>A <a href="https://query.farm">Query.Farm</a> VGI worker for DuckDB.</em></p>
+
 # vgi-image
 
 Decode images, read **EXIF**, compute **perceptual hashes**, make **thumbnails**
@@ -209,3 +215,12 @@ A hand-crafted EXIF/JPEG blob also exercises the GPS-decode path end to end in
 
 After rebuilding the worker, `DETACH img; ATTACH …` in DuckDB to pick up the new
 binary.
+
+---
+
+## Authorship & License
+
+Written by [Query.Farm](https://query.farm) — every VGI worker is designed and built by Query.Farm.
+
+Copyright 2026 Query Farm LLC - https://query.farm
+

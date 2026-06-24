@@ -48,11 +48,27 @@ impl ScalarFunction for Thumbnail {
                 "Resize an image BLOB to fit width×height (aspect-preserving) and re-encode".into(),
             return_type: Some(DataType::Binary),
             examples: vec![FunctionExample {
-                sql: "SELECT img.main.thumbnail(read_blob('photo.jpg'));".into(),
-                description: "Generate a 128×128 aspect-preserving JPEG thumbnail of an image."
+                sql: format!(
+                    "SELECT img.main.thumbnail({});",
+                    crate::meta::sample_png_expr()
+                ),
+                description: "Generate a 128x128 aspect-preserving JPEG thumbnail of an image."
                     .into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Generate Image Thumbnail",
+                "Resize an image BLOB to fit within a width x height box (aspect-preserving, \
+                 default 128x128) and re-encode it, returning the thumbnail as a BLOB. The \
+                 output format defaults to JPEG and can be png, webp, gif, bmp or tiff. Returns \
+                 NULL for NULL input and errors on undecodable bytes. Use to build previews and \
+                 image galleries in SQL.",
+                "Resize an image BLOB to fit a box (default 128x128) and re-encode it as a \
+                 thumbnail BLOB (default JPEG).",
+                "thumbnail, resize, downscale, preview, gallery, aspect ratio, re-encode, \
+                 jpeg, png, webp, image transform",
+                "scalar/transform.rs",
+            ),
             ..Default::default()
         }
     }
@@ -112,10 +128,25 @@ impl ScalarFunction for Convert {
                 "Decode an image BLOB and re-encode it to another format (full resolution)".into(),
             return_type: Some(DataType::Binary),
             examples: vec![FunctionExample {
-                sql: "SELECT img.main.convert(read_blob('photo.jpg'), 'png');".into(),
-                description: "Convert a JPEG image to PNG at full resolution.".into(),
+                sql: format!(
+                    "SELECT img.main.convert({}, 'png');",
+                    crate::meta::sample_png_expr()
+                ),
+                description: "Convert an image BLOB to PNG at full resolution.".into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Convert Image Format",
+                "Decode an image BLOB and re-encode it to another format at full resolution, \
+                 returning the converted BLOB. Target formats: jpeg, png, webp, gif, bmp, tiff. \
+                 Returns NULL for NULL input and errors on an unknown target format or \
+                 undecodable bytes. Use to normalize a mixed set of images to one format in SQL.",
+                "Decode an image BLOB and re-encode it to another format (jpeg, png, webp, gif, \
+                 bmp, tiff) at full resolution.",
+                "convert, transcode, re-encode, format conversion, png, jpeg, webp, gif, bmp, \
+                 tiff, change format, normalize images",
+                "scalar/transform.rs",
+            ),
             ..Default::default()
         }
     }

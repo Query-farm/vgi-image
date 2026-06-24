@@ -19,6 +19,7 @@
 
 mod arrow_io;
 mod imaging;
+mod meta;
 mod scalar;
 
 use vgi::catalog::{CatSchema, CatalogModel};
@@ -42,6 +43,17 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 .to_string(),
         ),
         tags: vec![
+            (
+                "vgi.title".to_string(),
+                "Image Inspection & Transformation".to_string(),
+            ),
+            (
+                "vgi.keywords".to_string(),
+                "image, images, photo, picture, decode, EXIF, metadata, GPS, geotag, \
+                 perceptual hash, phash, dhash, ahash, near-duplicate, deduplication, \
+                 thumbnail, resize, convert, png, jpeg, gif, bmp, tiff, webp, BLOB"
+                    .to_string(),
+            ),
             (
                 "vgi.description_llm".to_string(),
                 "Inspect and transform image BLOBs in SQL: decode a header into \
@@ -84,6 +96,23 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             tags: vec![
+                ("vgi.title".to_string(), "Image — main".to_string()),
+                (
+                    "vgi.keywords".to_string(),
+                    "image, image_info, exif, exif_gps, phash, dhash, ahash, phash_distance, \
+                     thumbnail, convert, decode, metadata, GPS, perceptual hash, deduplication, \
+                     resize, format conversion"
+                        .to_string(),
+                ),
+                // VGI123 classifying tags (bare keys: domain/category/topic) for faceting.
+                ("domain".to_string(), "media-and-imaging".to_string()),
+                ("category".to_string(), "image-processing".to_string()),
+                ("topic".to_string(), "image-inspection-and-transformation".to_string()),
+                (
+                    "vgi.source_url".to_string(),
+                    "https://github.com/Query-farm/vgi-image/blob/main/crates/image-worker/src/main.rs"
+                        .to_string(),
+                ),
                 (
                     "vgi.description_llm".to_string(),
                     "Image inspection and transformation functions: decode an image header, \
@@ -94,6 +123,15 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 (
                     "vgi.description_md".to_string(),
                     "Image inspection and transformation functions over Apache Arrow.".to_string(),
+                ),
+                // VGI506 representative example queries for the schema. Image BLOBs are
+                // built inline with `from_hex(...)` so each query is self-contained.
+                (
+                    "vgi.example_queries".to_string(),
+                    "SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format;\n\
+                     SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));\n\
+                     SELECT img.main.image_version();"
+                        .to_string(),
                 ),
             ],
             views: Vec::new(),

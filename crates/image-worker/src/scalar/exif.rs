@@ -30,10 +30,26 @@ impl ScalarFunction for Exif {
             description: "Extract EXIF metadata from an image BLOB as a MAP(VARCHAR, VARCHAR)"
                 .into(),
             examples: vec![FunctionExample {
-                sql: "SELECT img.main.exif(read_blob('photo.jpg'))['Make'] AS camera_make;".into(),
+                sql: format!(
+                    "SELECT img.main.exif({})['Make'] AS camera_make;",
+                    crate::meta::sample_png_expr()
+                ),
                 description: "Read the camera make from an image's EXIF metadata map.".into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Extract EXIF Metadata Map",
+                "Extract EXIF metadata from an image BLOB as a MAP(VARCHAR, VARCHAR) of \
+                 flattened tag name to string value, e.g. camera Make/Model, exposure, ISO, \
+                 orientation, and timestamps. Images without EXIF yield an empty (non-null) \
+                 map; a NULL input yields a NULL map. Use to read camera and capture metadata \
+                 in SQL.",
+                "Extract EXIF metadata from an image BLOB as a `MAP(VARCHAR, VARCHAR)`; index it \
+                 like `exif(blob)['Make']`.",
+                "exif, metadata, camera, make, model, lens, ISO, exposure, orientation, \
+                 timestamp, tags, map, photo metadata",
+                "scalar/exif.rs",
+            ),
             ..Default::default()
         }
     }
@@ -86,12 +102,26 @@ impl ScalarFunction for ExifGps {
             description:
                 "Extract decimal GPS lat/lon from EXIF as a STRUCT(lat, lon); NULL if absent".into(),
             examples: vec![FunctionExample {
-                sql: "SELECT img.main.exif_gps(read_blob('photo.jpg')).* AS (lat, lon);".into(),
+                sql: format!(
+                    "SELECT (img.main.exif_gps({})).lat;",
+                    crate::meta::sample_png_expr()
+                ),
                 description: "Extract decimal latitude and longitude from a geotagged \
                               image's EXIF GPS block."
                     .into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Extract EXIF GPS Coordinates",
+                "Extract the decimal GPS latitude and longitude from an image's EXIF GPS block \
+                 as a STRUCT(lat DOUBLE, lon DOUBLE). Returns a NULL struct when the image has \
+                 no GPS tags or input is NULL. Use to map and geo-filter geotagged photos.",
+                "Extract decimal GPS coordinates from an image's EXIF as `STRUCT(lat, lon)`; \
+                 NULL when no geotag is present.",
+                "gps, geotag, latitude, longitude, coordinates, location, exif gps, geolocation, \
+                 map photos, decimal degrees",
+                "scalar/exif.rs",
+            ),
             ..Default::default()
         }
     }

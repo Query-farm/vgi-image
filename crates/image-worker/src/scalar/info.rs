@@ -40,12 +40,27 @@ impl ScalarFunction for ImageInfo {
                 "Decode an image BLOB's header into a STRUCT(format, width, height, color, has_alpha)"
                     .into(),
             examples: vec![FunctionExample {
-                sql: "SELECT img.main.image_info(read_blob('photo.jpg')).*;".into(),
-                description: "Decode an image file's header into format, width, height, \
+                sql: format!(
+                    "SELECT (img.main.image_info({})).format;",
+                    crate::meta::sample_png_expr()
+                ),
+                description: "Decode an image BLOB's header into format, width, height, \
                               color model and alpha-channel flag."
                     .into(),
                 expected_output: None,
             }],
+            tags: crate::meta::object_tags(
+                "Decode Image Header Info",
+                "Decode the header of an image BLOB into a STRUCT of format (png, jpeg, gif, \
+                 bmp, tiff, webp), pixel width and height, color model, and whether it has an \
+                 alpha channel. Returns NULL for a NULL input and errors on undecodable bytes. \
+                 Use to inspect, validate, or catalogue images without fully decoding pixels.",
+                "Decode an image BLOB's header into `STRUCT(format, width, height, color, \
+                 has_alpha)`.",
+                "image info, image_info, dimensions, width, height, format, color model, \
+                 alpha, header, inspect image, metadata, decode",
+                "scalar/info.rs",
+            ),
             ..Default::default()
         }
     }

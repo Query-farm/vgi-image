@@ -10,7 +10,10 @@ use arrow_array::types::{
 };
 use arrow_array::{Array, ArrayRef, RecordBatch};
 use arrow_schema::DataType;
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
+use vgi::{
+    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
+    ScalarFunction,
+};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::blob_bytes;
@@ -22,6 +25,8 @@ pub struct PerceptualHash {
     name: &'static str,
     kind: HashKind,
     description: &'static str,
+    example_sql: &'static str,
+    example_desc: &'static str,
 }
 
 impl PerceptualHash {
@@ -30,6 +35,9 @@ impl PerceptualHash {
             name: "phash",
             kind: HashKind::Perceptual,
             description: "64-bit DCT perceptual hash of an image BLOB (UBIGINT)",
+            example_sql: "SELECT img.main.phash(read_blob('photo.jpg'));",
+            example_desc: "Compute the 64-bit DCT perceptual hash of an image for \
+                           near-duplicate detection.",
         }
     }
     pub fn dhash() -> Self {
@@ -37,6 +45,8 @@ impl PerceptualHash {
             name: "dhash",
             kind: HashKind::Difference,
             description: "64-bit difference (gradient) hash of an image BLOB (UBIGINT)",
+            example_sql: "SELECT img.main.dhash(read_blob('photo.jpg'));",
+            example_desc: "Compute the 64-bit difference (gradient) hash of an image.",
         }
     }
     pub fn ahash() -> Self {
@@ -44,6 +54,8 @@ impl PerceptualHash {
             name: "ahash",
             kind: HashKind::Average,
             description: "64-bit average hash of an image BLOB (UBIGINT)",
+            example_sql: "SELECT img.main.ahash(read_blob('photo.jpg'));",
+            example_desc: "Compute the 64-bit average hash of an image.",
         }
     }
 }
@@ -57,6 +69,11 @@ impl ScalarFunction for PerceptualHash {
         FunctionMetadata {
             description: self.description.into(),
             return_type: Some(DataType::UInt64),
+            examples: vec![FunctionExample {
+                sql: self.example_sql.into(),
+                description: self.example_desc.into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }
@@ -126,6 +143,16 @@ impl ScalarFunction for PhashDistance {
             description: "Hamming distance (0-64) between two packed 64-bit perceptual hashes"
                 .into(),
             return_type: Some(DataType::Int32),
+            examples: vec![FunctionExample {
+                sql: "SELECT img.main.phash_distance(\
+                      img.main.phash(read_blob('a.jpg')), \
+                      img.main.phash(read_blob('b.jpg'))) AS distance;"
+                    .into(),
+                description: "Measure how similar two images are by the Hamming distance \
+                              between their perceptual hashes (0 = identical)."
+                    .into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }

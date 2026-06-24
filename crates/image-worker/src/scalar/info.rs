@@ -7,7 +7,10 @@ use arrow_array::builder::{BooleanBuilder, Int32Builder, StringBuilder};
 use arrow_array::{ArrayRef, RecordBatch, StructArray};
 use arrow_buffer::NullBuffer;
 use arrow_schema::{DataType, Field, Fields};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
+use vgi::{
+    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
+    ScalarFunction,
+};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::blob_bytes;
@@ -36,6 +39,13 @@ impl ScalarFunction for ImageInfo {
             description:
                 "Decode an image BLOB's header into a STRUCT(format, width, height, color, has_alpha)"
                     .into(),
+            examples: vec![FunctionExample {
+                sql: "SELECT img.main.image_info(read_blob('photo.jpg')).*;".into(),
+                description: "Decode an image file's header into format, width, height, \
+                              color model and alpha-channel flag."
+                    .into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }

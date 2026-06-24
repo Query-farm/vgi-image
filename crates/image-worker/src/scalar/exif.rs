@@ -7,7 +7,10 @@ use arrow_array::builder::Float64Builder;
 use arrow_array::{ArrayRef, RecordBatch, StructArray};
 use arrow_buffer::NullBuffer;
 use arrow_schema::{DataType, Field, Fields};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
+use vgi::{
+    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
+    ScalarFunction,
+};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::{
@@ -26,6 +29,11 @@ impl ScalarFunction for Exif {
         FunctionMetadata {
             description: "Extract EXIF metadata from an image BLOB as a MAP(VARCHAR, VARCHAR)"
                 .into(),
+            examples: vec![FunctionExample {
+                sql: "SELECT img.main.exif(read_blob('photo.jpg'))['Make'] AS camera_make;".into(),
+                description: "Read the camera make from an image's EXIF metadata map.".into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }
@@ -77,6 +85,13 @@ impl ScalarFunction for ExifGps {
         FunctionMetadata {
             description:
                 "Extract decimal GPS lat/lon from EXIF as a STRUCT(lat, lon); NULL if absent".into(),
+            examples: vec![FunctionExample {
+                sql: "SELECT img.main.exif_gps(read_blob('photo.jpg')).* AS (lat, lon);".into(),
+                description: "Extract decimal latitude and longitude from a geotagged \
+                              image's EXIF GPS block."
+                    .into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }

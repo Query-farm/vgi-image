@@ -21,11 +21,87 @@ mod arrow_io;
 mod imaging;
 mod scalar;
 
+use vgi::catalog::{CatSchema, CatalogModel};
 use vgi::Worker;
 
 /// Worker version string, surfaced by `image_version()`.
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
+}
+
+/// Catalog + schema metadata (description, provenance, support) surfaced to
+/// DuckDB and the `vgi-lint` metadata-quality linter. The function objects
+/// themselves are served from the registered scalars; this only adds
+/// catalog/schema-level comments and tags.
+fn catalog_metadata(name: &str) -> CatalogModel {
+    CatalogModel {
+        name: name.to_string(),
+        comment: Some(
+            "Image decoding, EXIF metadata, perceptual hashing, thumbnailing and \
+             format conversion over Apache Arrow."
+                .to_string(),
+        ),
+        tags: vec![
+            (
+                "vgi.description_llm".to_string(),
+                "Inspect and transform image BLOBs in SQL: decode a header into \
+                 format/width/height/color/alpha, extract EXIF metadata and decimal GPS \
+                 coordinates, compute 64-bit perceptual hashes (phash/dhash/ahash) and their \
+                 Hamming distance for near-duplicate detection, generate aspect-preserving \
+                 thumbnails, and convert between image formats (png, jpeg, gif, bmp, tiff, webp). \
+                 Use for image cataloguing, deduplication, thumbnailing and EXIF/geotag analysis."
+                    .to_string(),
+            ),
+            (
+                "vgi.description_md".to_string(),
+                "# image\n\nImage decode, EXIF, perceptual hashing, thumbnailing and format \
+                 conversion over Apache Arrow.\n\nScalars: `image_info`, `exif`, `exif_gps`, \
+                 `phash`, `dhash`, `ahash`, `phash_distance`, `thumbnail`, `convert`, \
+                 `image_version`. Supported formats: png, jpeg, gif, bmp, tiff, webp."
+                    .to_string(),
+            ),
+            ("vgi.author".to_string(), "Query.Farm".to_string()),
+            (
+                "vgi.copyright".to_string(),
+                "Copyright 2026 Query Farm LLC - https://query.farm".to_string(),
+            ),
+            ("vgi.license".to_string(), "MIT".to_string()),
+            (
+                "vgi.support_contact".to_string(),
+                "https://github.com/Query-farm/vgi-image/issues".to_string(),
+            ),
+            (
+                "vgi.support_policy_url".to_string(),
+                "https://github.com/Query-farm/vgi-image/blob/main/README.md".to_string(),
+            ),
+        ],
+        source_url: Some("https://github.com/Query-farm/vgi-image".to_string()),
+        schemas: vec![CatSchema {
+            name: "main".to_string(),
+            comment: Some(
+                "Image inspection and transformation functions (decode, EXIF, hashing, \
+                 thumbnail, convert)."
+                    .to_string(),
+            ),
+            tags: vec![
+                (
+                    "vgi.description_llm".to_string(),
+                    "Image inspection and transformation functions: decode an image header, \
+                     extract EXIF metadata and GPS, compute perceptual hashes and their Hamming \
+                     distance, generate thumbnails, and convert between image formats."
+                        .to_string(),
+                ),
+                (
+                    "vgi.description_md".to_string(),
+                    "Image inspection and transformation functions over Apache Arrow.".to_string(),
+                ),
+            ],
+            views: Vec::new(),
+            macros: Vec::new(),
+            tables: Vec::new(),
+        }],
+        ..Default::default()
+    }
 }
 
 fn main() {
@@ -39,8 +115,11 @@ fn main() {
     if std::env::var_os("VGI_WORKER_CATALOG_NAME").is_none() {
         std::env::set_var("VGI_WORKER_CATALOG_NAME", "img");
     }
+    let catalog_name =
+        std::env::var("VGI_WORKER_CATALOG_NAME").unwrap_or_else(|_| "img".to_string());
 
     let mut worker = Worker::new();
     scalar::register(&mut worker);
+    worker.set_catalog(catalog_metadata(&catalog_name));
     worker.run();
 }

@@ -7,7 +7,10 @@ use arrow_array::builder::BinaryBuilder;
 use arrow_array::{ArrayRef, RecordBatch};
 use arrow_schema::DataType;
 use vgi::arguments::Arguments;
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams, ScalarFunction};
+use vgi::{
+    ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams,
+    ScalarFunction,
+};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_io::blob_bytes;
@@ -44,6 +47,12 @@ impl ScalarFunction for Thumbnail {
             description:
                 "Resize an image BLOB to fit width×height (aspect-preserving) and re-encode".into(),
             return_type: Some(DataType::Binary),
+            examples: vec![FunctionExample {
+                sql: "SELECT img.main.thumbnail(read_blob('photo.jpg'));".into(),
+                description: "Generate a 128×128 aspect-preserving JPEG thumbnail of an image."
+                    .into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }
@@ -102,6 +111,11 @@ impl ScalarFunction for Convert {
             description:
                 "Decode an image BLOB and re-encode it to another format (full resolution)".into(),
             return_type: Some(DataType::Binary),
+            examples: vec![FunctionExample {
+                sql: "SELECT img.main.convert(read_blob('photo.jpg'), 'png');".into(),
+                description: "Convert a JPEG image to PNG at full resolution.".into(),
+                expected_output: None,
+            }],
             ..Default::default()
         }
     }

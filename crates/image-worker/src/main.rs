@@ -55,7 +55,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             (
-                "vgi.description_llm".to_string(),
+                "vgi.doc_llm".to_string(),
                 "Inspect and transform image BLOBs in SQL: decode a header into \
                  format/width/height/color/alpha, extract EXIF metadata and decimal GPS \
                  coordinates, compute 64-bit perceptual hashes (phash/dhash/ahash) and their \
@@ -65,11 +65,13 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             (
-                "vgi.description_md".to_string(),
+                "vgi.doc_md".to_string(),
                 "# image\n\nImage decode, EXIF, perceptual hashing, thumbnailing and format \
-                 conversion over Apache Arrow.\n\nScalars: `image_info`, `exif`, `exif_gps`, \
-                 `phash`, `dhash`, `ahash`, `phash_distance`, `thumbnail`, `convert`, \
-                 `image_version`. Supported formats: png, jpeg, gif, bmp, tiff, webp."
+                 conversion over Apache Arrow, served to DuckDB/SQL as the `img` catalog.\n\n\
+                 ## Scalars\n\n`image_info`, `exif`, `exif_gps`, `phash`, `dhash`, `ahash`, \
+                 `phash_distance`, `thumbnail`, `convert`, `image_version`.\n\n## Notes\n\n\
+                 Supported formats: png, jpeg, gif, bmp, tiff, webp. Image bytes are passed as \
+                 DuckDB `BLOB` values; NULL inputs flow through to NULL results."
                     .to_string(),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),
@@ -114,15 +116,21 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                         .to_string(),
                 ),
                 (
-                    "vgi.description_llm".to_string(),
+                    "vgi.doc_llm".to_string(),
                     "Image inspection and transformation functions: decode an image header, \
                      extract EXIF metadata and GPS, compute perceptual hashes and their Hamming \
-                     distance, generate thumbnails, and convert between image formats."
+                     distance, generate thumbnails, and convert between image formats. Each \
+                     function takes an image BLOB; NULL inputs yield NULL results."
                         .to_string(),
                 ),
                 (
-                    "vgi.description_md".to_string(),
-                    "Image inspection and transformation functions over Apache Arrow.".to_string(),
+                    "vgi.doc_md".to_string(),
+                    "## img.main\n\nImage inspection and transformation functions over Apache \
+                     Arrow.\n\nUse these to catalogue images (`image_info`), read capture \
+                     metadata (`exif`, `exif_gps`), find near-duplicates \
+                     (`phash`/`dhash`/`ahash` + `phash_distance`), and produce derived images \
+                     (`thumbnail`, `convert`)."
+                        .to_string(),
                 ),
                 // VGI506 representative example queries for the schema. Image BLOBs are
                 // built inline with `from_hex(...)` so each query is self-contained.

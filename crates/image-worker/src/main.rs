@@ -49,10 +49,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.keywords".to_string(),
-                "image, images, photo, picture, decode, EXIF, metadata, GPS, geotag, \
-                 perceptual hash, phash, dhash, ahash, near-duplicate, deduplication, \
-                 thumbnail, resize, convert, png, jpeg, gif, bmp, tiff, webp, BLOB"
-                    .to_string(),
+                crate::meta::keywords_json(
+                    "image, images, photo, picture, decode, EXIF, metadata, GPS, geotag, \
+                     perceptual hash, phash, dhash, ahash, near-duplicate, deduplication, \
+                     thumbnail, resize, convert, png, jpeg, gif, bmp, tiff, webp, BLOB",
+                ),
             ),
             (
                 "vgi.doc_llm".to_string(),
@@ -101,20 +102,16 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ("vgi.title".to_string(), "Image — main".to_string()),
                 (
                     "vgi.keywords".to_string(),
-                    "image, image_info, exif, exif_gps, phash, dhash, ahash, phash_distance, \
-                     thumbnail, convert, decode, metadata, GPS, perceptual hash, deduplication, \
-                     resize, format conversion"
-                        .to_string(),
+                    crate::meta::keywords_json(
+                        "image, image_info, exif, exif_gps, phash, dhash, ahash, phash_distance, \
+                         thumbnail, convert, decode, metadata, GPS, perceptual hash, deduplication, \
+                         resize, format conversion",
+                    ),
                 ),
                 // VGI123 classifying tags (bare keys: domain/category/topic) for faceting.
                 ("domain".to_string(), "media-and-imaging".to_string()),
                 ("category".to_string(), "image-processing".to_string()),
                 ("topic".to_string(), "image-inspection-and-transformation".to_string()),
-                (
-                    "vgi.source_url".to_string(),
-                    "https://github.com/Query-farm/vgi-image/blob/main/crates/image-worker/src/main.rs"
-                        .to_string(),
-                ),
                 (
                     "vgi.doc_llm".to_string(),
                     "Image inspection and transformation functions: decode an image header, \

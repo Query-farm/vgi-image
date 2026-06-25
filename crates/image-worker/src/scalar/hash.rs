@@ -250,8 +250,18 @@ impl ScalarFunction for PhashDistance {
 
     fn argument_specs(&self) -> Vec<ArgSpec> {
         vec![
-            ArgSpec::any_column("a", 0, "First hash (UBIGINT)"),
-            ArgSpec::any_column("b", 1, "Second hash (UBIGINT)"),
+            ArgSpec::column(
+                "a",
+                0,
+                "uint64",
+                "The first perceptual hash to compare, as produced by phash/dhash/ahash",
+            ),
+            ArgSpec::column(
+                "b",
+                1,
+                "uint64",
+                "The second perceptual hash to compare against the first",
+            ),
         ]
     }
 

@@ -5,15 +5,10 @@
 //! - `vgi.title` (VGI124)      — human-friendly display name
 //! - `vgi.doc_llm` (VGI112)    — Markdown narrative aimed at LLMs/agents
 //! - `vgi.doc_md` (VGI113)     — Markdown narrative for human docs
-//! - `vgi.keywords` (VGI126)   — comma-separated search terms/synonyms
-//! - `vgi.source_url` (VGI128) — link to the implementing source file
+//! - `vgi.keywords` (VGI126)   — JSON array of search terms/synonyms (VGI138)
 //!
-//! `source_url(file)` builds the canonical GitHub blob URL for a source file so
-//! every object points at exactly where it is implemented.
-
-/// Base GitHub blob URL for source files in this repo (pinned to `main`).
-const SOURCE_BASE: &str =
-    "https://github.com/Query-farm/vgi-image/blob/main/crates/image-worker/src";
+//! Per-object `vgi.source_url` is intentionally omitted: VGI139 wants the source
+//! link to live only on the catalog object, not repeated on every function.
 
 /// A tiny, self-contained, decodable 2×2 RGB PNG as a hex string. Examples build
 /// an image BLOB inline with `from_hex(SAMPLE_PNG_HEX)` so every example query is
@@ -26,27 +21,40 @@ pub fn sample_png_expr() -> String {
     format!("from_hex('{SAMPLE_PNG_HEX}')")
 }
 
-/// Build the implementation `vgi.source_url` for a file under `image-worker/src`,
-/// e.g. `source_url("scalar/hash.rs")`.
-pub fn source_url(relative_path: &str) -> String {
-    format!("{SOURCE_BASE}/{relative_path}")
+/// Serialize a comma-separated keyword list as a JSON array of strings, e.g.
+/// `"a, b"` → `["a","b"]`. VGI138 requires `vgi.keywords` to be a JSON array,
+/// not a comma-separated string.
+pub fn keywords_json(keywords: &str) -> String {
+    let items: Vec<String> = keywords
+        .split(',')
+        .map(|k| k.trim())
+        .filter(|k| !k.is_empty())
+        .map(|k| {
+            // Minimal JSON string escaping (keywords contain no control chars,
+            // but guard quotes/backslashes for correctness).
+            let escaped = k.replace('\\', "\\\\").replace('"', "\\\"");
+            format!("\"{escaped}\"")
+        })
+        .collect();
+    format!("[{}]", items.join(","))
 }
 
-/// Build the five standard per-object discovery/description tags.
+/// Build the four standard per-object discovery/description tags.
 ///
-/// `relative_path` is the implementing file relative to `image-worker/src`.
+/// `relative_path` identifies the implementing file (kept in the signature for
+/// call-site documentation; the source link itself lives on the catalog object
+/// per VGI139, so it is not emitted here).
 pub fn object_tags(
     title: &str,
     description_llm: &str,
     description_md: &str,
     keywords: &str,
-    relative_path: &str,
+    _relative_path: &str,
 ) -> Vec<(String, String)> {
     vec![
         ("vgi.title".to_string(), title.to_string()),
         ("vgi.doc_llm".to_string(), description_llm.to_string()),
         ("vgi.doc_md".to_string(), description_md.to_string()),
-        ("vgi.keywords".to_string(), keywords.to_string()),
-        ("vgi.source_url".to_string(), source_url(relative_path)),
+        ("vgi.keywords".to_string(), keywords_json(keywords)),
     ]
 }

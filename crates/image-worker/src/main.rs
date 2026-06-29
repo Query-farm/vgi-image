@@ -67,12 +67,39 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.doc_md".to_string(),
-                "# image\n\nImage decode, EXIF, perceptual hashing, thumbnailing and format \
-                 conversion over Apache Arrow, served to DuckDB/SQL as the `img` catalog.\n\n\
-                 ## Scalars\n\n`image_info`, `exif`, `exif_gps`, `phash`, `dhash`, `ahash`, \
-                 `phash_distance`, `thumbnail`, `convert`, `image_version`.\n\n## Notes\n\n\
-                 Supported formats: png, jpeg, gif, bmp, tiff, webp. Image bytes are passed as \
-                 DuckDB `BLOB` values; NULL inputs flow through to NULL results."
+                "# image — Image Inspection, EXIF/GPS, Perceptual Hashing & Thumbnails in SQL\n\n\
+                 Decode images, read EXIF and GPS metadata, compute perceptual hashes for \
+                 near-duplicate detection, and generate thumbnails directly in DuckDB SQL — no \
+                 external tooling or file wrangling required. The `image` worker brings a full \
+                 image-processing toolbox to the `img` catalog, turning ordinary `BLOB` columns of \
+                 PNG, JPEG, GIF, BMP, TIFF and WebP bytes into queryable, structured data.\n\n\
+                 This extension is for anyone cataloguing, deduplicating, or auditing image \
+                 collections from SQL: data engineers building media pipelines, analysts hunting \
+                 near-duplicate or geotagged photos, and teams that want EXIF and \
+                 perceptual-hash features right next to their existing DuckDB tables. Everything \
+                 runs in-process over Apache Arrow, so image-derived columns join against the rest \
+                 of your data without ever leaving the database.\n\n\
+                 Under the hood the worker is powered by the pure-Rust \
+                 [`image`](https://github.com/image-rs/image) crate \
+                 ([docs](https://docs.rs/image)) for decoding, resizing and format conversion; \
+                 [`kamadak-exif`](https://github.com/kamadak/exif-rs) \
+                 ([docs](https://docs.rs/kamadak-exif)) for parsing EXIF tags and GPS \
+                 coordinates; and [`image_hasher`](https://github.com/abonander/img_hash) \
+                 ([docs](https://docs.rs/image_hasher)) for 64-bit perceptual hashes. Image bytes \
+                 are passed as DuckDB `BLOB` values and `NULL` inputs flow through to `NULL` \
+                 results, so the functions compose cleanly inside larger queries.\n\n\
+                 ## SQL use cases\n\n\
+                 - Inspect format, dimensions, color type and alpha with `image_info` to \
+                 catalogue a folder of images.\n\
+                 - Read capture metadata with `exif`, and pull decimal latitude/longitude with \
+                 `exif_gps` for geotag analysis.\n\
+                 - Detect near-duplicates by computing `phash`, `dhash` or `ahash` and comparing \
+                 them with `phash_distance` (Hamming distance).\n\
+                 - Produce derived images with `thumbnail` (aspect-preserving) and `convert` \
+                 (between png, jpeg, gif, bmp, tiff, webp).\n\
+                 - Check the running build with `image_version`.\n\n\
+                 All functions operate on a single image `BLOB`; malformed or truncated bytes \
+                 yield a graceful `NULL` or a clear error."
                     .to_string(),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),

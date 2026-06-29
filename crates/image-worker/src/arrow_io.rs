@@ -158,6 +158,7 @@ pub mod test_support {
             attach_opaque_data: None,
             at_unit: None,
             at_value: None,
+            copy_from: None,
         }
     }
 

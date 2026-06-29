@@ -44,10 +44,12 @@ SELECT phash_distance(18446744073709551615::UBIGINT, 0);
 ----
 64
 
-# Non-integer arguments are rejected (the worker only accepts integer hashes;
-# a bare 20-digit literal binds as DECIMAL in DuckDB).
+# Out-of-range arguments are rejected: phash_distance's parameters are UBIGINT
+# (64-bit) hashes, so a literal beyond UBIGINT (here 2^64) fails to bind. A bare
+# 20-digit literal that *does* fit u64 implicitly casts and works fine (the
+# u64::MAX case above proves the in-range boundary).
 statement error
-SELECT phash_distance(18446744073709551615, 0);
+SELECT phash_distance(18446744073709551616, 0);
 ----
 
 # A hash is zero distance from itself when read back from the same image.

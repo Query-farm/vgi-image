@@ -68,6 +68,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             (
                 "vgi.doc_md".to_string(),
                 "# image — Image Inspection, EXIF/GPS, Perceptual Hashing & Thumbnails in SQL\n\n\
+                 ![image logo](https://avatars.githubusercontent.com/u/49300799?s=240&v=4)\n\n\
                  Decode images, read EXIF and GPS metadata, compute perceptual hashes for \
                  near-duplicate detection, and generate thumbnails directly in DuckDB SQL — no \
                  external tooling or file wrangling required. The `image` worker brings a full \

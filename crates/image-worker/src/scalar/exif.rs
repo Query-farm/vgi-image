@@ -48,6 +48,7 @@ impl ScalarFunction for Exif {
                  like `exif(blob)['Make']`.",
                 "exif, metadata, camera, make, model, lens, ISO, exposure, orientation, \
                  timestamp, tags, map, photo metadata",
+                "metadata",
                 "scalar/exif.rs",
             ),
             ..Default::default()
@@ -120,6 +121,7 @@ impl ScalarFunction for ExifGps {
                  NULL when no geotag is present.",
                 "gps, geotag, latitude, longitude, coordinates, location, exif gps, geolocation, \
                  map photos, decimal degrees",
+                "metadata",
                 "scalar/exif.rs",
             ),
             ..Default::default()

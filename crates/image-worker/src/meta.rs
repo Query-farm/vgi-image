@@ -15,10 +15,44 @@
 /// re-runnable as written — no external files or `read_blob` table function.
 pub const SAMPLE_PNG_HEX: &str = "89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082";
 
+/// A second, visually distinct tiny 4×4 RGB PNG (hex). Used by the `agent_test`
+/// similarity task so the perceptual-hash distance is a genuine, worker-computed
+/// non-zero value (not a trivial 0 the analyst could shortcut without querying).
+pub const SAMPLE_PNG_HEX_B: &str = "89504e470d0a1a0a0000000d4948445200000004000000040802000000269309290000002e4944415478da1d864901003008c3f246045ad0819acac355c778e4c0c0e1efaba4aa22a627ba6332130bb4f2de03fd2e1413e2c4ad370000000049454e44ae426082";
+
 /// Build `from_hex('<png>')` — an inline DuckDB BLOB expression that decodes to a
 /// tiny valid PNG. Use inside example SQL where an image BLOB is required.
 pub fn sample_png_expr() -> String {
     format!("from_hex('{SAMPLE_PNG_HEX}')")
+}
+
+/// Build the `vgi.agent_test_tasks` suite (VGI152/VGI920) as a JSON string.
+///
+/// Each task is a natural-language prompt plus a canonical `reference_sql`. The
+/// `vgi-lint simulate` grader compares an LLM analyst's answer against the
+/// reference *result*, so every task is designed to have a single, unambiguous
+/// scalar answer that any correct query reproduces (a format string, a pixel
+/// count, a boolean, a hash, a distance). Each task carries its own image inline
+/// as `from_hex('<png>')`, so the suite needs no external fixtures, and each one
+/// forces use of a distinct worker capability.
+pub fn agent_test_tasks_json() -> String {
+    // A single placeholder keeps the (long) sample-image hex correct in every
+    // task; `SAMPLE_PNG_HEX` is the tiny valid 2×2 PNG used across examples.
+    const TEMPLATE: &str = r#"[
+  {"name": "image_format", "prompt": "Report the image format (for example 'png' or 'jpeg') of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT (img.main.image_info(from_hex('__HEX__'))).format AS format"},
+  {"name": "image_width", "prompt": "What is the pixel width of the image whose raw bytes are the hex string __HEX__?", "reference_sql": "SELECT (img.main.image_info(from_hex('__HEX__'))).width AS width"},
+  {"name": "read_exif", "prompt": "Return the EXIF metadata tags embedded in the image whose raw bytes are the hex string __HEX__, as a map of tag name to value.", "reference_sql": "SELECT img.main.exif(from_hex('__HEX__')) AS exif_tags"},
+  {"name": "has_gps", "prompt": "Does the image whose raw bytes are the hex string __HEX__ contain GPS location metadata? Return a single boolean.", "reference_sql": "SELECT img.main.exif_gps(from_hex('__HEX__')) IS NOT NULL AS has_gps"},
+  {"name": "perceptual_hash", "prompt": "Compute the 64-bit DCT perceptual hash (the phash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.phash(from_hex('__HEX__')) AS phash"},
+  {"name": "difference_hash", "prompt": "Compute the 64-bit difference hash (the dhash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.dhash(from_hex('__HEX__')) AS dhash"},
+  {"name": "average_hash", "prompt": "Compute the 64-bit average hash (the ahash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.ahash(from_hex('__HEX__')) AS ahash"},
+  {"name": "image_similarity", "prompt": "You are given two images as hex byte strings. First image: __HEX__. Second image: __HEXB__. Compute the phash (perceptual hash) of each image separately, then pass those two hash values into the phash_distance function to get the Hamming distance between them. Return that single distance value.", "reference_sql": "SELECT img.main.phash_distance(img.main.phash(from_hex('__HEX__')), img.main.phash(from_hex('__HEXB__'))) AS distance"},
+  {"name": "thumbnail_format", "prompt": "Generate a thumbnail of the image whose raw bytes are the hex string __HEX__ using the function's default settings, then report the image format of the resulting thumbnail image.", "reference_sql": "SELECT (img.main.image_info(img.main.thumbnail(from_hex('__HEX__')))).format AS thumb_format"},
+  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then report the image format of the converted image.", "reference_sql": "SELECT (img.main.image_info(img.main.convert(from_hex('__HEX__'), 'bmp'))).format AS converted_format"}
+]"#;
+    TEMPLATE
+        .replace("__HEXB__", SAMPLE_PNG_HEX_B)
+        .replace("__HEX__", SAMPLE_PNG_HEX)
 }
 
 /// Serialize a comma-separated keyword list as a JSON array of strings, e.g.
@@ -44,11 +78,15 @@ pub fn keywords_json(keywords: &str) -> String {
 /// `relative_path` identifies the implementing file (kept in the signature for
 /// call-site documentation; the source link itself lives on the catalog object
 /// per VGI139, so it is not emitted here).
+///
+/// `category` names one of the schema's `vgi.categories` (VGI413) — it groups the
+/// object under a navigation section for listing, SEO, and discovery.
 pub fn object_tags(
     title: &str,
     description_llm: &str,
     description_md: &str,
     keywords: &str,
+    category: &str,
     _relative_path: &str,
 ) -> Vec<(String, String)> {
     vec![
@@ -56,5 +94,7 @@ pub fn object_tags(
         ("vgi.doc_llm".to_string(), description_llm.to_string()),
         ("vgi.doc_md".to_string(), description_md.to_string()),
         ("vgi.keywords".to_string(), keywords_json(keywords)),
+        // VGI413: place this object in one of the schema's declared categories.
+        ("vgi.category".to_string(), category.to_string()),
     ]
 }

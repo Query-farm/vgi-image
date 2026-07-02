@@ -32,6 +32,7 @@ impl ScalarFunction for ImageVersion {
                  for diagnostics and confirming which build is attached.",
                 "Return the image worker version string, e.g. `image_version()` -> '0.1.0'.",
                 "version, build version, image_version, diagnostics, worker version, semver",
+                "diagnostics",
                 "scalar/version.rs",
             ),
             ..Default::default()

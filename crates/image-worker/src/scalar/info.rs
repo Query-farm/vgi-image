@@ -59,6 +59,7 @@ impl ScalarFunction for ImageInfo {
                  has_alpha)`.",
                 "image info, image_info, dimensions, width, height, format, color model, \
                  alpha, header, inspect image, metadata, decode",
+                "inspection",
                 "scalar/info.rs",
             ),
             ..Default::default()

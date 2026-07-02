@@ -60,13 +60,17 @@ impl ScalarFunction for Thumbnail {
                 "Generate Image Thumbnail",
                 "Resize an image BLOB to fit within a width x height box (aspect-preserving, \
                  default 128x128) and re-encode it, returning the thumbnail as a BLOB. The \
-                 output format defaults to JPEG and can be png, webp, gif, bmp or tiff. Returns \
-                 NULL for NULL input and errors on undecodable bytes. Use to build previews and \
-                 image galleries in SQL.",
+                 output format defaults to JPEG and can be png, webp, gif, bmp or tiff. Call it \
+                 with just the image BLOB — `thumbnail(img)` — to use the defaults (128x128 \
+                 JPEG); the optional width, height, and format are POSITIONAL constants \
+                 (`thumbnail(img, 64, 64, 'png')`), because DuckDB does not bind named arguments \
+                 to scalar functions. Returns NULL for NULL input and errors on undecodable \
+                 bytes. Use to build previews and image galleries in SQL.",
                 "Resize an image BLOB to fit a box (default 128x128) and re-encode it as a \
                  thumbnail BLOB (default JPEG).",
                 "thumbnail, resize, downscale, preview, gallery, aspect ratio, re-encode, \
                  jpeg, png, webp, image transform",
+                "transformation",
                 "scalar/transform.rs",
             ),
             ..Default::default()
@@ -145,6 +149,7 @@ impl ScalarFunction for Convert {
                  bmp, tiff) at full resolution.",
                 "convert, transcode, re-encode, format conversion, png, jpeg, webp, gif, bmp, \
                  tiff, change format, normalize images",
+                "transformation",
                 "scalar/transform.rs",
             ),
             ..Default::default()

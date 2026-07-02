@@ -133,6 +133,7 @@ impl ScalarFunction for PerceptualHash {
             self.description_llm,
             self.description_md,
             self.keywords,
+            "hashing",
             "scalar/hash.rs",
         );
         // The worker carries its one VGI509 executable-examples bundle on `phash`.
@@ -242,6 +243,7 @@ impl ScalarFunction for PhashDistance {
                  more different).",
                 "hamming distance, phash_distance, similarity, near-duplicate, compare hashes, \
                  bit difference, image similarity, deduplication",
+                "hashing",
                 "scalar/hash.rs",
             ),
             ..Default::default()

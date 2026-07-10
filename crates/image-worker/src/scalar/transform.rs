@@ -87,7 +87,10 @@ impl ScalarFunction for Thumbnail {
                 -1,
                 "varchar",
                 "Output format: jpeg (default), png, webp, gif, bmp, tiff",
-            ),
+            )
+            // Closed set sourced from the decoder's own accepted spellings so the
+            // discovery-facing constraint can never drift from behaviour.
+            .with_choices(OutFormat::ACCEPTED.iter().copied()),
         ]
     }
 
@@ -164,7 +167,10 @@ impl ScalarFunction for Convert {
                 1,
                 "varchar",
                 "Target format: jpeg, png, webp, gif, bmp, tiff",
-            ),
+            )
+            // Closed set sourced from the decoder's own accepted spellings so the
+            // discovery-facing constraint can never drift from behaviour.
+            .with_choices(OutFormat::ACCEPTED.iter().copied()),
         ]
     }
 

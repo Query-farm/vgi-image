@@ -227,6 +227,14 @@ pub enum OutFormat {
 }
 
 impl OutFormat {
+    /// Every format spelling [`OutFormat::parse`] accepts — the canonical names
+    /// plus the common aliases (`jpg`, `tif`) — in recognition order. This is
+    /// the single source of truth for the discovery-facing `choices` constraint
+    /// declared on the `convert` / `thumbnail` `format` arguments, so the
+    /// advertised closed set can never drift from what `parse` actually accepts.
+    pub const ACCEPTED: &'static [&'static str] =
+        &["jpeg", "jpg", "png", "webp", "gif", "bmp", "tiff", "tif"];
+
     /// Parse a case-insensitive format name (`jpeg`/`jpg`, `png`, …).
     pub fn parse(s: &str) -> Result<Self> {
         Ok(match s.to_ascii_lowercase().as_str() {
@@ -403,5 +411,18 @@ mod tests {
         assert_eq!(OutFormat::parse("JPG").unwrap(), OutFormat::Jpeg);
         assert_eq!(OutFormat::parse("png").unwrap(), OutFormat::Png);
         assert!(OutFormat::parse("xyz").is_err());
+    }
+
+    #[test]
+    fn accepted_list_stays_in_sync_with_parse() {
+        // Every advertised `choices` value must actually parse, so the
+        // discovery-facing constraint never rejects a spelling the code accepts
+        // (nor advertises one it does not).
+        for name in OutFormat::ACCEPTED {
+            assert!(
+                OutFormat::parse(name).is_ok(),
+                "ACCEPTED lists '{name}' but parse rejects it"
+            );
+        }
     }
 }

@@ -38,17 +38,25 @@ pub fn sample_png_expr() -> String {
 pub fn agent_test_tasks_json() -> String {
     // A single placeholder keeps the (long) sample-image hex correct in every
     // task; `SAMPLE_PNG_HEX` is the tiny valid 2×2 PNG used across examples.
+    // Every task grades on ONE unambiguous value. Scalar-answer tasks set
+    // `ignore_column_names` so a correct value under a differently-named column
+    // still grades as a pass. Tasks whose natural output is a map, a heuristic
+    // hash distance, or a format string that has synonyms ('jpg' vs 'jpeg') are
+    // framed as yes/no BOOLEAN predicates — the most robust shape for the LLM
+    // agent-simulation grader (an exact compare on those raw outputs is a
+    // coin-flip because the analyst rounds, renames, or picks a synonym).
     const TEMPLATE: &str = r#"[
-  {"name": "image_format", "prompt": "Report the image format (for example 'png' or 'jpeg') of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT (img.main.image_info(from_hex('__HEX__'))).format AS format"},
-  {"name": "image_width", "prompt": "What is the pixel width of the image whose raw bytes are the hex string __HEX__?", "reference_sql": "SELECT (img.main.image_info(from_hex('__HEX__'))).width AS width"},
-  {"name": "read_exif", "prompt": "Return the EXIF metadata tags embedded in the image whose raw bytes are the hex string __HEX__, as a map of tag name to value.", "reference_sql": "SELECT img.main.exif(from_hex('__HEX__')) AS exif_tags"},
-  {"name": "has_gps", "prompt": "Does the image whose raw bytes are the hex string __HEX__ contain GPS location metadata? Return a single boolean.", "reference_sql": "SELECT img.main.exif_gps(from_hex('__HEX__')) IS NOT NULL AS has_gps"},
-  {"name": "perceptual_hash", "prompt": "Compute the 64-bit DCT perceptual hash (the phash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.phash(from_hex('__HEX__')) AS phash"},
-  {"name": "difference_hash", "prompt": "Compute the 64-bit difference hash (the dhash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.dhash(from_hex('__HEX__')) AS dhash"},
-  {"name": "average_hash", "prompt": "Compute the 64-bit average hash (the ahash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.ahash(from_hex('__HEX__')) AS ahash"},
-  {"name": "image_similarity", "prompt": "You are given two images as hex byte strings. First image: __HEX__. Second image: __HEXB__. Compute the phash (perceptual hash) of each image separately, then pass those two hash values into the phash_distance function to get the Hamming distance between them. Return that single distance value.", "reference_sql": "SELECT img.main.phash_distance(img.main.phash(from_hex('__HEX__')), img.main.phash(from_hex('__HEXB__'))) AS distance"},
-  {"name": "thumbnail_format", "prompt": "Generate a thumbnail of the image whose raw bytes are the hex string __HEX__ using the function's default settings, then report the image format of the resulting thumbnail image.", "reference_sql": "SELECT (img.main.image_info(img.main.thumbnail(from_hex('__HEX__')))).format AS thumb_format"},
-  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then report the image format of the converted image.", "reference_sql": "SELECT (img.main.image_info(img.main.convert(from_hex('__HEX__'), 'bmp'))).format AS converted_format"}
+  {"name": "image_format", "prompt": "Report the image format (for example 'png' or 'jpeg') of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT (img.main.image_info(from_hex('__HEX__'))).format AS format", "ignore_column_names": true},
+  {"name": "image_width", "prompt": "What is the pixel width of the image whose raw bytes are the hex string __HEX__?", "reference_sql": "SELECT (img.main.image_info(from_hex('__HEX__'))).width AS width", "ignore_column_names": true},
+  {"name": "has_exif", "prompt": "Does the image whose raw bytes are the hex string __HEX__ carry any embedded EXIF metadata tags? Return a single boolean.", "reference_sql": "SELECT cardinality(img.main.exif(from_hex('__HEX__'))) > 0 AS has_exif", "ignore_column_names": true},
+  {"name": "has_gps", "prompt": "Does the image whose raw bytes are the hex string __HEX__ contain GPS location metadata? Return a single boolean.", "reference_sql": "SELECT img.main.exif_gps(from_hex('__HEX__')) IS NOT NULL AS has_gps", "ignore_column_names": true},
+  {"name": "perceptual_hash", "prompt": "Compute the 64-bit DCT perceptual hash (the phash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.phash(from_hex('__HEX__')) AS phash", "ignore_column_names": true},
+  {"name": "difference_hash", "prompt": "Compute the 64-bit difference hash (the dhash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.dhash(from_hex('__HEX__')) AS dhash", "ignore_column_names": true},
+  {"name": "average_hash", "prompt": "Compute the 64-bit average hash (the ahash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.ahash(from_hex('__HEX__')) AS ahash", "ignore_column_names": true},
+  {"name": "images_are_different", "prompt": "You are given two images as hex byte strings. First image: __HEX__. Second image: __HEXB__. Compute the phash (perceptual hash) of each image separately, pass those two hash values into the phash_distance function to get the Hamming distance between them, and answer whether the two images are perceptually different (is that distance greater than zero). Return a single boolean.", "reference_sql": "SELECT img.main.phash_distance(img.main.phash(from_hex('__HEX__')), img.main.phash(from_hex('__HEXB__'))) > 0 AS different", "ignore_column_names": true},
+  {"name": "thumbnail_is_jpeg", "prompt": "Generate a thumbnail of the image whose raw bytes are the hex string __HEX__ using the function's default settings, then confirm whether the resulting thumbnail is a JPEG image. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.thumbnail(from_hex('__HEX__')))).format = 'jpeg' AS is_jpeg", "ignore_column_names": true},
+  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then confirm whether the converted image is in BMP format. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.convert(from_hex('__HEX__'), 'bmp'))).format = 'bmp' AS is_bmp", "ignore_column_names": true},
+  {"name": "worker_version_is_semver", "prompt": "Using the image worker's own version function, determine whether the running worker reports a semantic version of the form MAJOR.MINOR.PATCH (three dot-separated integers). Return a single boolean.", "reference_sql": "SELECT regexp_matches(img.main.image_version(), '^[0-9]+\\.[0-9]+\\.[0-9]+') AS is_semver", "ignore_column_names": true}
 ]"#;
     TEMPLATE
         .replace("__HEXB__", SAMPLE_PNG_HEX_B)

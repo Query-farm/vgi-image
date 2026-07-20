@@ -25,7 +25,8 @@ mod scalar;
 use vgi::catalog::{CatSchema, CatalogModel};
 use vgi::Worker;
 
-/// Worker version string, surfaced by `image_version()`.
+/// Worker version string, surfaced to consumers as the catalog's
+/// `implementation_version` (read from `vgi_catalogs()` without spending a query).
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
@@ -37,6 +38,10 @@ pub fn version() -> &'static str {
 fn catalog_metadata(name: &str) -> CatalogModel {
     CatalogModel {
         name: name.to_string(),
+        // The running worker's build version, surfaced via `vgi_catalogs()` so an
+        // agent can read which build is attached without a diagnostic function
+        // call (see VGI328).
+        implementation_version: Some(crate::version().to_string()),
         comment: Some(
             "Image decoding, EXIF metadata, perceptual hashing, thumbnailing and \
              format conversion over Apache Arrow."
@@ -62,8 +67,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  coordinates, compute 64-bit perceptual fingerprints and their Hamming distance \
                  for near-duplicate detection, generate aspect-preserving previews, and \
                  re-encode between raster formats (png, jpeg, gif, bmp, tiff, webp). Use for \
-                 image cataloguing, deduplication, previewing and EXIF/geotag analysis. List the \
-                 schema to discover the exact functions."
+                 image cataloguing, deduplication, previewing and EXIF/geotag analysis."
                     .to_string(),
             ),
             (
@@ -98,7 +102,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  normalize or preview a mixed set of images — all without leaving SQL or \
                  standing up an external image-processing service. Malformed or truncated bytes \
                  yield a graceful `NULL` or a clear error, so it is safe to run across messy data \
-                 at scale. List the schema to discover the exact functions and their signatures."
+                 at scale."
                     .to_string(),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),
@@ -156,8 +160,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
   {"name": "inspection", "description": "Decode an image header to read its format, pixel dimensions, color model, and alpha channel."},
   {"name": "metadata", "description": "Extract embedded EXIF tags and decimal GPS coordinates from image bytes."},
   {"name": "hashing", "description": "Compute compact perceptual fingerprints and compare them to find visually similar or near-duplicate images."},
-  {"name": "transformation", "description": "Resize, thumbnail, and re-encode images between raster formats."},
-  {"name": "diagnostics", "description": "Inspect the running worker, such as its build version."}
+  {"name": "transformation", "description": "Resize, thumbnail, and re-encode images between raster formats."}
 ]"#
                     .to_string(),
                 ),
@@ -166,7 +169,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     "Image inspection and transformation functions: decode an image header, \
                      extract EXIF metadata and GPS, compute perceptual fingerprints and their \
                      Hamming distance, generate previews, and re-encode between raster formats. \
-                     Each function takes an image BLOB; NULL inputs yield NULL results."
+                     Each function takes an image `BLOB`; NULL inputs yield NULL results."
                         .to_string(),
                 ),
                 (
@@ -176,22 +179,35 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                      (format, dimensions, color model), reading embedded **metadata** (EXIF \
                      tags and decimal GPS), perceptual **hashing** for near-duplicate detection, \
                      and image **transformation** (thumbnailing and format conversion).\n\n\
-                     Every function takes a single image BLOB (PNG, JPEG, GIF, BMP, TIFF, or \
+                     Every function takes a single image `BLOB` (PNG, JPEG, GIF, BMP, TIFF, or \
                      WebP); a NULL input flows through to a NULL result, and undecodable bytes \
                      surface a clear error. Everything runs in-process over Apache Arrow, so \
-                     image-derived columns join cleanly against the rest of your data. List the \
-                     schema to discover the exact functions and their signatures."
+                     image-derived columns join cleanly against the rest of your data."
                         .to_string(),
                 ),
-                // VGI506 representative example queries for the schema. Image BLOBs are
-                // built inline with `from_hex(...)` so each query is self-contained.
-                (
-                    "vgi.example_queries".to_string(),
-                    "SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format;\n\
-                     SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));\n\
-                     SELECT img.main.image_version();"
-                        .to_string(),
-                ),
+                // VGI506/VGI515 representative example queries for the schema, each
+                // with a human-readable description. Image BLOBs are built inline
+                // with `from_hex(...)` so every query is self-contained and runnable.
+                crate::meta::example_queries_tag(&[
+                    (
+                        "Decode an image BLOB's header and read its detected format.",
+                        format!(
+                            "SELECT (img.main.image_info({png})).format;",
+                            png = crate::meta::sample_png_expr()
+                        ),
+                    ),
+                    (
+                        "Compute the 64-bit DCT perceptual hash of an image BLOB.",
+                        format!("SELECT img.main.phash({});", crate::meta::sample_png_expr()),
+                    ),
+                    (
+                        "Rank two images by perceptual similarity via the Hamming distance of their phashes.",
+                        format!(
+                            "SELECT img.main.phash_distance(img.main.phash({png}), img.main.dhash({png})) AS distance;",
+                            png = crate::meta::sample_png_expr()
+                        ),
+                    ),
+                ]),
             ],
             views: Vec::new(),
             macros: Vec::new(),

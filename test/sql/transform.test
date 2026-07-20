@@ -1,9 +1,10 @@
 # name: test/sql/transform.test
 # group: [vgi_image]
 #
-# thumbnail(blob) and convert(blob, format) → BLOB. Exercises the Binary builder
-# and the positional const-string argument across the Arrow boundary, re-feeding
-# the produced BLOB back into image_info to validate it is a real image.
+# thumbnail(blob), thumbnail_fit(blob, width, height, format) and
+# convert(blob, format) → BLOB. Exercises the Binary builder and the positional
+# const int/string arguments across the Arrow boundary, re-feeding the produced
+# BLOB back into image_info to validate it is a real image.
 
 require-env VGI_IMAGE_WORKER
 
@@ -37,6 +38,31 @@ SELECT octet_length(thumbnail(content)) < octet_length(content)
 FROM read_blob('test/sql/data/gradient.png');
 ----
 true
+
+# thumbnail_fit() honors an explicit box and output format: 160x120 fit into a
+# 64x64 box aspect-preserves to 64x48, re-encoded as PNG.
+query III
+SELECT s.format, s.width, s.height
+FROM (SELECT image_info(thumbnail_fit(content, 64, 64, 'png')) AS s
+      FROM read_blob('test/sql/data/gradient.png')) t;
+----
+png	64	48
+
+# thumbnail_fit() with a NULL image → NULL BLOB.
+query I
+SELECT thumbnail_fit(NULL, 64, 64, 'png') IS NULL;
+----
+true
+
+# A non-positive dimension is rejected at bind time.
+statement error
+SELECT thumbnail_fit(content, 0, 64, 'png') FROM read_blob('test/sql/data/gradient.png');
+----
+
+# An unknown output format is rejected at bind time.
+statement error
+SELECT thumbnail_fit(content, 64, 64, 'xyz') FROM read_blob('test/sql/data/gradient.png');
+----
 
 # convert() changes the container format while keeping full resolution.
 query III

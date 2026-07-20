@@ -44,10 +44,6 @@ const EXECUTABLE_EXAMPLES: &str = r#"[
   {
     "description": "Convert a PNG BLOB to BMP and report the result byte length.",
     "sql": "SELECT octet_length(img.main.convert(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 'bmp')) AS bmp_bytes"
-  },
-  {
-    "description": "Return the running image worker version string.",
-    "sql": "SELECT img.main.image_version() AS version"
   }
 ]"#;
 
@@ -74,7 +70,7 @@ impl PerceptualHash {
                            near-duplicate detection.",
             title: "Perceptual Hash (DCT)",
             description_llm: "Compute a 64-bit DCT-based perceptual hash (pHash) of an image \
-                              BLOB, packed into a UBIGINT. Visually similar images get similar \
+                              `BLOB`, packed into a `UBIGINT`. Visually similar images get similar \
                               hashes, so comparing hashes (see phash_distance) detects \
                               near-duplicates and resized/recompressed copies. Returns NULL for \
                               NULL input and errors on undecodable bytes.",
@@ -92,7 +88,7 @@ impl PerceptualHash {
             example_desc: "Compute the 64-bit difference (gradient) hash of an image.",
             title: "Difference Hash (Gradient)",
             description_llm: "Compute a 64-bit difference (gradient) hash (dHash) of an image \
-                              BLOB, packed into a UBIGINT. It encodes horizontal brightness \
+                              `BLOB`, packed into a `UBIGINT`. It encodes horizontal brightness \
                               gradients, so visually similar images get similar hashes for \
                               near-duplicate detection via phash_distance. Returns NULL for NULL \
                               input and errors on undecodable bytes.",
@@ -109,8 +105,9 @@ impl PerceptualHash {
             description: "64-bit average hash of an image BLOB (UBIGINT)",
             example_desc: "Compute the 64-bit average hash of an image.",
             title: "Average Hash (Mean)",
-            description_llm: "Compute a 64-bit average hash (aHash) of an image BLOB, packed into \
-                              a UBIGINT. Each bit marks whether a downsampled pixel is above the \
+            description_llm:
+                "Compute a 64-bit average hash (aHash) of an image `BLOB`, packed into \
+                              a `UBIGINT`. Each bit marks whether a downsampled pixel is above the \
                               mean brightness, giving a fast similarity fingerprint for \
                               near-duplicate detection via phash_distance. Returns NULL for NULL \
                               input and errors on undecodable bytes.",
@@ -140,15 +137,20 @@ impl ScalarFunction for PerceptualHash {
         if self.name == "phash" {
             tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         }
+        let example_sql = format!(
+            "SELECT img.main.{}({});",
+            self.name,
+            crate::meta::sample_png_expr()
+        );
+        tags.push(crate::meta::example_queries_tag(&[(
+            self.example_desc,
+            example_sql.clone(),
+        )]));
         FunctionMetadata {
             description: self.description.into(),
             return_type: Some(DataType::UInt64),
             examples: vec![FunctionExample {
-                sql: format!(
-                    "SELECT img.main.{}({});",
-                    self.name,
-                    crate::meta::sample_png_expr()
-                ),
+                sql: example_sql,
                 description: self.example_desc.into(),
                 expected_output: None,
             }],
@@ -218,34 +220,40 @@ impl ScalarFunction for PhashDistance {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let example_sql = format!(
+            "SELECT img.main.phash_distance(img.main.phash({png}), img.main.dhash({png})) \
+             AS distance;",
+            png = crate::meta::sample_png_expr()
+        );
+        let example_desc = "Measure how similar two images are by the Hamming distance \
+                            between their perceptual hashes (0 = identical).";
+        let mut tags = crate::meta::object_tags(
+            "Perceptual Hash Hamming Distance",
+            "Compute the Hamming distance (0-64) between two packed 64-bit perceptual \
+             hashes — the number of differing bits. Smaller distances mean more visually \
+             similar images; 0 means identical hashes. Pair with phash/dhash/ahash to \
+             rank near-duplicates. Returns NULL when either hash is NULL.",
+            "Hamming distance between two 64-bit perceptual hashes (0 = identical, higher = \
+             more different).",
+            "hamming distance, phash_distance, similarity, near-duplicate, compare hashes, \
+             bit difference, image similarity, deduplication",
+            "hashing",
+            "scalar/hash.rs",
+        );
+        tags.push(crate::meta::example_queries_tag(&[(
+            example_desc,
+            example_sql.clone(),
+        )]));
         FunctionMetadata {
             description: "Hamming distance (0-64) between two packed 64-bit perceptual hashes"
                 .into(),
             return_type: Some(DataType::Int32),
             examples: vec![FunctionExample {
-                sql: format!(
-                    "SELECT img.main.phash_distance(img.main.phash({png}), img.main.dhash({png})) \
-                     AS distance;",
-                    png = crate::meta::sample_png_expr()
-                ),
-                description: "Measure how similar two images are by the Hamming distance \
-                              between their perceptual hashes (0 = identical)."
-                    .into(),
+                sql: example_sql,
+                description: example_desc.into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "Perceptual Hash Hamming Distance",
-                "Compute the Hamming distance (0-64) between two packed 64-bit perceptual \
-                 hashes — the number of differing bits. Smaller distances mean more visually \
-                 similar images; 0 means identical hashes. Pair with phash/dhash/ahash to \
-                 rank near-duplicates. Returns NULL when either hash is NULL.",
-                "Hamming distance between two 64-bit perceptual hashes (0 = identical, higher = \
-                 more different).",
-                "hamming distance, phash_distance, similarity, near-duplicate, compare hashes, \
-                 bit difference, image similarity, deduplication",
-                "hashing",
-                "scalar/hash.rs",
-            ),
+            tags,
             ..Default::default()
         }
     }

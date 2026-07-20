@@ -18,7 +18,7 @@ crates/image-worker/
   src/main.rs                      Worker::new(); registers scalars
   src/imaging.rs                   PURE logic (no Arrow): decode/exif/gps/hash/thumbnail/convert + unit tests
   src/arrow_io.rs                  BLOB reading + MAP/STRUCT builders + in-process scalar test harness
-  src/scalar/{info,exif,hash,transform,version,mod}.rs   thin Arrow adapters, one group each
+  src/scalar/{info,exif,hash,transform,mod}.rs   thin Arrow adapters, one group each
   examples/gen_fixtures.rs         deterministically generates the test images (make fixtures)
   tests/exif_gps.rs                integration test (hand-built EXIF/JPEG with GPS)
 test/sql/*.test                    haybarn-unittest sqllogictest — authoritative E2E
@@ -32,10 +32,16 @@ Arrow marshalling in `arrow_io.rs` + `scalar/*.rs` (thin, harness-tested).
 ## Scalars & named args — sharp edge (read first)
 
 **DuckDB does not bind named args to scalar functions.** `thumbnail(b, width :=
-128)` fails the binder. So `thumbnail(b)` uses defaults (128×128 jpeg) and
-`convert(b, 'png')` is positional. There is no named-arg option for any scalar
-here. (A `dominant_colors` *table* function could use named args, but it's not
-implemented — it was deferred; the named-scalar-arg limitation is why.)
+128)` fails the binder, and a worker `ArgSpec` at position `-1` (named-only)
+never becomes a callable DuckDB parameter — the community extension registers it
+as a single positional `thumbnail(ANY)` overload, so any named-only "options" are
+dead surface (the linter's VGI901 catches an example that relies on them). Every
+tunable scalar arg must therefore be a **positional const** (`position >= 1`,
+like `convert(b, 'png')`), read by index via `Arguments::const_i64/const_str`.
+That is why sizing/format live on `thumbnail_fit(b, width, height, format)` (all
+positional consts) while `thumbnail(b)` is the zero-config 128×128 JPEG default.
+(A `dominant_colors` *table* function could use named args, but it's not
+implemented — deferred.)
 
 ## Sharp edges (learned the hard way)
 
@@ -75,6 +81,9 @@ haybarn-unittest`). CI runs fmt/clippy/build/test plus an `e2e-sql` job.
 
 `image_info` (STRUCT), `exif` (MAP), `exif_gps` (STRUCT, NULL if absent),
 `phash`/`dhash`/`ahash` (UBIGINT, 64-bit), `phash_distance` (INT Hamming, pure
-integer), `thumbnail` (BLOB, aspect-preserving), `convert` (BLOB),
-`image_version` (VARCHAR). Garbage/empty/truncated bytes → graceful NULL or a
-clear error (see the boundary tests for exact behavior).
+integer), `thumbnail` (BLOB, 128×128 JPEG default), `thumbnail_fit` (BLOB,
+explicit width/height/format positional consts), `convert` (BLOB).
+Garbage/empty/truncated bytes → graceful NULL or a clear error (see the boundary
+tests for exact behavior). The worker build version is not a function — it is
+published as the `img` catalog's `implementation_version` (read via
+`vgi_catalogs()`), per vgi-lint VGI328 (no parameterless diagnostic functions).

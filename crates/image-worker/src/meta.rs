@@ -55,12 +55,19 @@ pub fn agent_test_tasks_json() -> String {
   {"name": "average_hash", "prompt": "Compute the 64-bit average hash (the ahash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.ahash(from_hex('__HEX__')) AS ahash", "ignore_column_names": true},
   {"name": "images_are_different", "prompt": "You are given two images as hex byte strings. First image: __HEX__. Second image: __HEXB__. Compute the phash (perceptual hash) of each image separately, pass those two hash values into the phash_distance function to get the Hamming distance between them, and answer whether the two images are perceptually different (is that distance greater than zero). Return a single boolean.", "reference_sql": "SELECT img.main.phash_distance(img.main.phash(from_hex('__HEX__')), img.main.phash(from_hex('__HEXB__'))) > 0 AS different", "ignore_column_names": true},
   {"name": "thumbnail_is_jpeg", "prompt": "Generate a thumbnail of the image whose raw bytes are the hex string __HEX__ using the function's default settings, then confirm whether the resulting thumbnail is a JPEG image. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.thumbnail(from_hex('__HEX__')))).format = 'jpeg' AS is_jpeg", "ignore_column_names": true},
-  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then confirm whether the converted image is in BMP format. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.convert(from_hex('__HEX__'), 'bmp'))).format = 'bmp' AS is_bmp", "ignore_column_names": true},
-  {"name": "worker_version_is_semver", "prompt": "Using the image worker's own version function, determine whether the running worker reports a semantic version of the form MAJOR.MINOR.PATCH (three dot-separated integers). Return a single boolean.", "reference_sql": "SELECT regexp_matches(img.main.image_version(), '^[0-9]+\\.[0-9]+\\.[0-9]+') AS is_semver", "ignore_column_names": true}
+  {"name": "sized_thumbnail_is_png", "prompt": "Generate a 32x32 PNG thumbnail of the image whose raw bytes are the hex string __HEX__ (choose the size and format explicitly), then confirm whether the resulting thumbnail is a PNG image. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.thumbnail_fit(from_hex('__HEX__'), 32, 32, 'png'))).format = 'png' AS is_png", "ignore_column_names": true},
+  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then confirm whether the converted image is in BMP format. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.convert(from_hex('__HEX__'), 'bmp'))).format = 'bmp' AS is_bmp", "ignore_column_names": true}
 ]"#;
     TEMPLATE
         .replace("__HEXB__", SAMPLE_PNG_HEX_B)
         .replace("__HEX__", SAMPLE_PNG_HEX)
+}
+
+/// Minimal JSON string literal (with surrounding quotes). Our inputs contain no
+/// control characters, but guard quotes/backslashes for correctness.
+fn json_string(s: &str) -> String {
+    let escaped = s.replace('\\', "\\\\").replace('"', "\\\"");
+    format!("\"{escaped}\"")
 }
 
 /// Serialize a comma-separated keyword list as a JSON array of strings, e.g.
@@ -71,14 +78,33 @@ pub fn keywords_json(keywords: &str) -> String {
         .split(',')
         .map(|k| k.trim())
         .filter(|k| !k.is_empty())
-        .map(|k| {
-            // Minimal JSON string escaping (keywords contain no control chars,
-            // but guard quotes/backslashes for correctness).
-            let escaped = k.replace('\\', "\\\\").replace('"', "\\\"");
-            format!("\"{escaped}\"")
-        })
+        .map(json_string)
         .collect();
     format!("[{}]", items.join(","))
+}
+
+/// Build the `vgi.example_queries` tag as a JSON array of
+/// `{"description": ..., "sql": ...}` objects (VGI515).
+///
+/// The VGI extension's native `duckdb_functions().examples` column is a plain
+/// `VARCHAR[]` of SQL strings that cannot carry a per-example description, so an
+/// object's illustrative examples must ALSO ride on this tag for every example to
+/// be described. Each `(description, sql)` pair becomes one described entry.
+pub fn example_queries_tag(examples: &[(&str, String)]) -> (String, String) {
+    let items: Vec<String> = examples
+        .iter()
+        .map(|(desc, sql)| {
+            format!(
+                "{{\"description\":{},\"sql\":{}}}",
+                json_string(desc),
+                json_string(sql)
+            )
+        })
+        .collect();
+    (
+        "vgi.example_queries".to_string(),
+        format!("[{}]", items.join(",")),
+    )
 }
 
 /// Build the four standard per-object discovery/description tags.

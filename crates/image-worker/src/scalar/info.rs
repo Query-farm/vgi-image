@@ -35,33 +35,39 @@ impl ScalarFunction for ImageInfo {
     }
 
     fn metadata(&self) -> FunctionMetadata {
+        let example_sql = format!(
+            "SELECT (img.main.image_info({})).format;",
+            crate::meta::sample_png_expr()
+        );
+        let example_desc = "Decode an image BLOB's header into format, width, height, \
+                            color model and alpha-channel flag.";
+        let mut tags = crate::meta::object_tags(
+            "Decode Image Header Info",
+            "Decode the header of an image `BLOB` into a `STRUCT` of format (png, jpeg, gif, \
+             bmp, tiff, webp), pixel width and height, color model, and whether it has an \
+             alpha channel. Returns NULL for a NULL input and errors on undecodable bytes. \
+             Use to inspect, validate, or catalogue images without fully decoding pixels.",
+            "Decode an image `BLOB`'s header into `STRUCT(format, width, height, color, \
+             has_alpha)`.",
+            "image info, image_info, dimensions, width, height, format, color model, \
+             alpha, header, inspect image, metadata, decode",
+            "inspection",
+            "scalar/info.rs",
+        );
+        tags.push(crate::meta::example_queries_tag(&[(
+            example_desc,
+            example_sql.clone(),
+        )]));
         FunctionMetadata {
             description:
                 "Decode an image BLOB's header into a STRUCT(format, width, height, color, has_alpha)"
                     .into(),
             examples: vec![FunctionExample {
-                sql: format!(
-                    "SELECT (img.main.image_info({})).format;",
-                    crate::meta::sample_png_expr()
-                ),
-                description: "Decode an image BLOB's header into format, width, height, \
-                              color model and alpha-channel flag."
-                    .into(),
+                sql: example_sql,
+                description: example_desc.into(),
                 expected_output: None,
             }],
-            tags: crate::meta::object_tags(
-                "Decode Image Header Info",
-                "Decode the header of an image BLOB into a STRUCT of format (png, jpeg, gif, \
-                 bmp, tiff, webp), pixel width and height, color model, and whether it has an \
-                 alpha channel. Returns NULL for a NULL input and errors on undecodable bytes. \
-                 Use to inspect, validate, or catalogue images without fully decoding pixels.",
-                "Decode an image BLOB's header into `STRUCT(format, width, height, color, \
-                 has_alpha)`.",
-                "image info, image_info, dimensions, width, height, format, color model, \
-                 alpha, header, inspect image, metadata, decode",
-                "inspection",
-                "scalar/info.rs",
-            ),
+            tags,
             ..Default::default()
         }
     }

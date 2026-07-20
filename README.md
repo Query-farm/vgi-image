@@ -58,9 +58,12 @@ bytes into a `BLOB` column to feed these functions.
 | `dhash(blob)` | scalar → UBIGINT | 64-bit difference (gradient) hash |
 | `ahash(blob)` | scalar → UBIGINT | 64-bit average hash |
 | `phash_distance(a, b)` | scalar → INT | Hamming distance (0–64) between two hashes |
-| `thumbnail(blob, width := 128, height := 128, format := 'jpeg')` | scalar → BLOB | Aspect-preserving resize + re-encode |
+| `thumbnail(blob)` | scalar → BLOB | Aspect-preserving 128×128 JPEG thumbnail (zero-config) |
+| `thumbnail_fit(blob, width, height, format)` | scalar → BLOB | Aspect-preserving resize into a `width`×`height` box, re-encoded to `format` |
 | `convert(blob, format)` | scalar → BLOB | Decode and re-encode to another format |
-| `image_version()` | scalar → VARCHAR | Worker version string |
+
+The running worker's build version is surfaced as the `img` catalog's
+`implementation_version` (read it from `vgi_catalogs()`), not as a SQL function.
 
 ### `image_info` — inspect without a full pipeline
 
@@ -109,9 +112,13 @@ and good at catching crops/edits; `ahash` is the simplest/fastest.
 ### `thumbnail` / `convert` — resize & re-encode
 
 ```sql
--- Write 256px JPEG thumbnails out to files:
+-- Zero-config 128×128 JPEG thumbnails:
+SELECT file, thumbnail(content) AS thumb FROM read_blob('photos/*');
+
+-- Write explicit 256px JPEG thumbnails out to files. width/height/format are
+-- POSITIONAL constants — DuckDB does not bind named args to scalar functions:
 COPY (
-  SELECT file, thumbnail(content, width := 256, height := 256, format := 'jpeg') AS thumb
+  SELECT file, thumbnail_fit(content, 256, 256, 'jpeg') AS thumb
   FROM read_blob('photos/*')
 ) TO 'thumbs' (FORMAT parquet);
 
@@ -119,10 +126,10 @@ COPY (
 SELECT convert(content, 'webp') FROM read_blob('icons/*.png');
 ```
 
-`thumbnail` only ever **shrinks** and always **preserves aspect ratio** (a
-100×50 image into a 128×128 box becomes 128×64). Both functions take/return
-`BLOB`. Supported output formats: `jpeg`, `png`, `webp`, `gif`, `bmp`, `tiff`
-(JPEG output drops any alpha channel).
+`thumbnail` / `thumbnail_fit` only ever **shrink** and always **preserve aspect
+ratio** (a 100×50 image into a 128×128 box becomes 128×64). All three functions
+take/return `BLOB`. Supported output formats: `jpeg`, `png`, `webp`, `gif`,
+`bmp`, `tiff` (JPEG output drops any alpha channel).
 
 ---
 

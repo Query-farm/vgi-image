@@ -4,3 +4,6 @@
 .DS_Store
 # vgi-lint local caches (agent-review / simulate)
 .vgi-*-cache.json
+
+# Browser build output (wasm/build.sh)
+/wasm/dist

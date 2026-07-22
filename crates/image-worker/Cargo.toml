@@ -8,13 +8,15 @@ authors.workspace = true
 repository.workspace = true
 description = "VGI worker bringing image decode, EXIF, perceptual hashing, thumbnails and format conversion to DuckDB over Apache Arrow"
 
+[lib]
+name = "image_worker"
+path = "src/lib.rs"
+
 [[bin]]
 name = "image-worker"
 path = "src/main.rs"
 
 [dependencies]
-vgi.workspace = true
-vgi-rpc.workspace = true
 arrow-array.workspace = true
 arrow-buffer.workspace = true
 arrow-schema.workspace = true
@@ -22,7 +24,21 @@ image.workspace = true
 kamadak-exif.workspace = true
 image_hasher.workspace = true
 log = "0.4"
+
+# --- Native ---------------------------------------------------------------
+# The SDK's real default features — unchanged from before the wasm split.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+vgi = { workspace = true, features = ["sqlite", "transport-http"] }
+vgi-rpc = { workspace = true, features = ["http"] }
 env_logger = "0.11"
+
+# --- wasm32 ---------------------------------------------------------------
+# No sqlite (C) and no HTTP transport (tokio/mio/axum); the bincode stream codec
+# is what the SAB byte-channel transport needs. No env_logger (the browser build
+# has no stderr logger).
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+vgi = { workspace = true }
+vgi-rpc = { workspace = true, features = ["stream-codec"] }
 
 [dev-dependencies]
 # Integration tests build a hand-crafted EXIF/JPEG blob and parse it the same way

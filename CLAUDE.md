@@ -13,7 +13,7 @@ Built on the `vgi` crate (crates.io), modeled on `vgi-fixedformat` /
 ## Layout
 
 ```
-Cargo.toml                         workspace; pins vgi = "0.5.0"
+Cargo.toml                         workspace; pins vgi = "0.46", arrow 60
 crates/image-worker/
   src/main.rs                      Worker::new(); registers scalars
   src/imaging.rs                   PURE logic (no Arrow): decode/exif/gps/hash/thumbnail/convert + unit tests
@@ -55,10 +55,9 @@ implemented — deferred.)
    its `DataType::Map` from an empty `MapBuilder` (DuckDB field names
    `entries`/`key`/`value`) so the bind-time and process-time schemas are
    identical; mismatches surface as obscure cast errors at query time.
-4. **MSRV pins.** `image = "=0.25.9"` and `image_hasher = "=3.0.0"` — newer
-   patch releases bump MSRV past the workspace `rust-version = 1.86`. `image`
-   default features are disabled (drops the heavy AVIF/rav1e chain); only
-   png/jpeg/gif/bmp/tiff/webp are enabled. Don't unpin without checking MSRV.
+4. **Lean `image` features.** Workspace `rust-version = 1.97` (set by the vgi
+   SDK). `image` default features are disabled (drops the heavy AVIF/rav1e
+   chain); only png/jpeg/gif/bmp/tiff/webp are enabled.
 5. **Fixtures are generated, not hand-authored.** `make fixtures` runs
    `examples/gen_fixtures.rs` to (re)produce `test/sql/data/` deterministically,
    including a decodable JPEG with EXIF GPS injected via an APP1 segment.

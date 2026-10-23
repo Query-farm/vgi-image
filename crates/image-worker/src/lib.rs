@@ -126,7 +126,8 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             // VGI152: an analyst-task suite so `vgi-lint simulate` can measure how
             // well an agent actually drives this worker. Each task is a natural
-            // prompt plus the canonical `reference_sql` that answers it. Every task
+            // prompt; the canonical `reference_sql` that answers it lives in the
+            // private `vgi-agent-tests.yaml` sidecar (VGI416). Every task
             // is deterministic and self-contained — it builds its own image BLOB
             // inline with `from_hex(...)`, so it needs no external fixtures.
             (
@@ -137,6 +138,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         source_url: Some("https://github.com/Query-farm/vgi-image".to_string()),
         schemas: vec![CatSchema {
             name: "main".to_string(),
+            path: Vec::new(),
             comment: Some(
                 "Image inspection and transformation functions (decode, EXIF, hashing, \
                  thumbnail, convert)."

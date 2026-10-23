@@ -27,7 +27,7 @@ SELECT image_info(data).* FROM read_blob('photos/*.jpg');
 
 ## Quick start
 
-**1. Build the worker** (needs Rust 1.86+):
+**1. Build the worker** (needs Rust 1.97+):
 
 ```sh
 cargo build --release          # produces target/release/image-worker
@@ -153,7 +153,7 @@ Inputs are `BLOB` columns (`VARCHAR` is also accepted and read as raw bytes).
 
 Decode/encode: **PNG, JPEG, GIF, BMP, TIFF, WebP** (decode for all; encode for
 all of these). The heavy AVIF codec chain is intentionally left out to keep the
-binary small and the MSRV at 1.86 — add the `image` crate's `avif` feature if you
+binary small — add the `image` crate's `avif` feature if you
 need it.
 
 ---
@@ -168,9 +168,6 @@ This worker (MIT) is built on:
 | [`kamadak-exif`](https://crates.io/crates/kamadak-exif) | BSD-2-Clause | EXIF parsing |
 | [`image_hasher`](https://crates.io/crates/image_hasher) | MIT/Apache-2.0 | aHash / dHash / pHash (DCT) |
 | [`vgi`](https://crates.io/crates/vgi) | — | VGI worker SDK (Arrow IPC) |
-
-`image` is pinned to `0.25.9` and `image_hasher` to `3.0.0` because their next
-patch releases raise the MSRV past this crate's `rust-version` (1.86).
 
 ---
 

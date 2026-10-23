@@ -28,8 +28,10 @@ pub fn sample_png_expr() -> String {
 
 /// Build the `vgi.agent_test_tasks` suite (VGI152/VGI920) as a JSON string.
 ///
-/// Each task is a natural-language prompt plus a canonical `reference_sql`. The
-/// `vgi-lint simulate` grader compares an LLM analyst's answer against the
+/// Each task is a natural-language prompt; its canonical `reference_sql` (and
+/// grading options) live in the private `vgi-agent-tests.yaml` sidecar at the
+/// repo root, keyed by task name, so the graded agent never sees them (VGI416).
+/// The `vgi-lint simulate` grader compares an LLM analyst's answer against the
 /// reference *result*, so every task is designed to have a single, unambiguous
 /// scalar answer that any correct query reproduces (a format string, a pixel
 /// count, a boolean, a hash, a distance). Each task carries its own image inline
@@ -46,17 +48,17 @@ pub fn agent_test_tasks_json() -> String {
     // agent-simulation grader (an exact compare on those raw outputs is a
     // coin-flip because the analyst rounds, renames, or picks a synonym).
     const TEMPLATE: &str = r#"[
-  {"name": "image_format", "prompt": "Report the image format (for example 'png' or 'jpeg') of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT (img.main.image_info(from_hex('__HEX__'))).format AS format", "ignore_column_names": true},
-  {"name": "image_width", "prompt": "What is the pixel width of the image whose raw bytes are the hex string __HEX__?", "reference_sql": "SELECT (img.main.image_info(from_hex('__HEX__'))).width AS width", "ignore_column_names": true},
-  {"name": "has_exif", "prompt": "Does the image whose raw bytes are the hex string __HEX__ carry any embedded EXIF metadata tags? Return a single boolean.", "reference_sql": "SELECT cardinality(img.main.exif(from_hex('__HEX__'))) > 0 AS has_exif", "ignore_column_names": true},
-  {"name": "has_gps", "prompt": "Does the image whose raw bytes are the hex string __HEX__ contain GPS location metadata? Return a single boolean.", "reference_sql": "SELECT img.main.exif_gps(from_hex('__HEX__')) IS NOT NULL AS has_gps", "ignore_column_names": true},
-  {"name": "perceptual_hash", "prompt": "Compute the 64-bit DCT perceptual hash (the phash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.phash(from_hex('__HEX__')) AS phash", "ignore_column_names": true},
-  {"name": "difference_hash", "prompt": "Compute the 64-bit difference hash (the dhash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.dhash(from_hex('__HEX__')) AS dhash", "ignore_column_names": true},
-  {"name": "average_hash", "prompt": "Compute the 64-bit average hash (the ahash function) of the image whose raw bytes are the hex string __HEX__.", "reference_sql": "SELECT img.main.ahash(from_hex('__HEX__')) AS ahash", "ignore_column_names": true},
-  {"name": "images_are_different", "prompt": "You are given two images as hex byte strings. First image: __HEX__. Second image: __HEXB__. Compute the phash (perceptual hash) of each image separately, pass those two hash values into the phash_distance function to get the Hamming distance between them, and answer whether the two images are perceptually different (is that distance greater than zero). Return a single boolean.", "reference_sql": "SELECT img.main.phash_distance(img.main.phash(from_hex('__HEX__')), img.main.phash(from_hex('__HEXB__'))) > 0 AS different", "ignore_column_names": true},
-  {"name": "thumbnail_is_jpeg", "prompt": "Generate a thumbnail of the image whose raw bytes are the hex string __HEX__ using the function's default settings, then confirm whether the resulting thumbnail is a JPEG image. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.thumbnail(from_hex('__HEX__')))).format = 'jpeg' AS is_jpeg", "ignore_column_names": true},
-  {"name": "sized_thumbnail_is_png", "prompt": "Generate a 32x32 PNG thumbnail of the image whose raw bytes are the hex string __HEX__ (choose the size and format explicitly), then confirm whether the resulting thumbnail is a PNG image. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.thumbnail_fit(from_hex('__HEX__'), 32, 32, 'png'))).format = 'png' AS is_png", "ignore_column_names": true},
-  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then confirm whether the converted image is in BMP format. Return a single boolean.", "reference_sql": "SELECT (img.main.image_info(img.main.convert(from_hex('__HEX__'), 'bmp'))).format = 'bmp' AS is_bmp", "ignore_column_names": true}
+  {"name": "image_format", "prompt": "Report the image format (for example 'png' or 'jpeg') of the image whose raw bytes are the hex string __HEX__."},
+  {"name": "image_width", "prompt": "What is the pixel width of the image whose raw bytes are the hex string __HEX__?"},
+  {"name": "has_exif", "prompt": "Does the image whose raw bytes are the hex string __HEX__ carry any embedded EXIF metadata tags? Return a single boolean."},
+  {"name": "has_gps", "prompt": "Does the image whose raw bytes are the hex string __HEX__ contain GPS location metadata? Return a single boolean."},
+  {"name": "perceptual_hash", "prompt": "Compute the 64-bit DCT perceptual hash (the phash function) of the image whose raw bytes are the hex string __HEX__."},
+  {"name": "difference_hash", "prompt": "Compute the 64-bit difference hash (the dhash function) of the image whose raw bytes are the hex string __HEX__."},
+  {"name": "average_hash", "prompt": "Compute the 64-bit average hash (the ahash function) of the image whose raw bytes are the hex string __HEX__."},
+  {"name": "images_are_different", "prompt": "You are given two images as hex byte strings. First image: __HEX__. Second image: __HEXB__. Compute the phash (perceptual hash) of each image separately, pass those two hash values into the phash_distance function to get the Hamming distance between them, and answer whether the two images are perceptually different (is that distance greater than zero). Return a single boolean."},
+  {"name": "thumbnail_is_jpeg", "prompt": "Generate a thumbnail of the image whose raw bytes are the hex string __HEX__ using the function's default settings, then confirm whether the resulting thumbnail is a JPEG image. Return a single boolean."},
+  {"name": "sized_thumbnail_is_png", "prompt": "Generate a 32x32 PNG thumbnail of the image whose raw bytes are the hex string __HEX__ (choose the size and format explicitly), then confirm whether the resulting thumbnail is a PNG image. Return a single boolean."},
+  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then confirm whether the converted image is in BMP format. Return a single boolean."}
 ]"#;
     TEMPLATE
         .replace("__HEXB__", SAMPLE_PNG_HEX_B)

@@ -1,0 +1,42 @@
+# Private graders for the agent-suitability suite (`vgi-lint simulate`).
+#
+# The prompts are published in the catalog's vgi.agent_test_tasks tag
+# (crates/image-worker/src/meta.rs); the answers live here, keyed by task
+# name, so the agent being graded never sees them. vgi-lint discovers this
+# file in the directory it runs from. Every task carries its image inline as
+# from_hex('<png>'), so the suite needs no external fixtures.
+
+tasks:
+  - name: image_format
+    reference_sql: "SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format AS format"
+    ignore_column_names: true
+  - name: image_width
+    reference_sql: "SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).width AS width"
+    ignore_column_names: true
+  - name: has_exif
+    reference_sql: "SELECT cardinality(img.main.exif(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))) > 0 AS has_exif"
+    ignore_column_names: true
+  - name: has_gps
+    reference_sql: "SELECT img.main.exif_gps(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')) IS NOT NULL AS has_gps"
+    ignore_column_names: true
+  - name: perceptual_hash
+    reference_sql: "SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')) AS phash"
+    ignore_column_names: true
+  - name: difference_hash
+    reference_sql: "SELECT img.main.dhash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')) AS dhash"
+    ignore_column_names: true
+  - name: average_hash
+    reference_sql: "SELECT img.main.ahash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')) AS ahash"
+    ignore_column_names: true
+  - name: images_are_different
+    reference_sql: "SELECT img.main.phash_distance(img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')), img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000004000000040802000000269309290000002e4944415478da1d864901003008c3f246045ad0819acac355c778e4c0c0e1efaba4aa22a627ba6332130bb4f2de03fd2e1413e2c4ad370000000049454e44ae426082'))) > 0 AS different"
+    ignore_column_names: true
+  - name: thumbnail_is_jpeg
+    reference_sql: "SELECT (img.main.image_info(img.main.thumbnail(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')))).format = 'jpeg' AS is_jpeg"
+    ignore_column_names: true
+  - name: sized_thumbnail_is_png
+    reference_sql: "SELECT (img.main.image_info(img.main.thumbnail_fit(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 32, 32, 'png'))).format = 'png' AS is_png"
+    ignore_column_names: true
+  - name: convert_to_bmp
+    reference_sql: "SELECT (img.main.image_info(img.main.convert(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 'bmp'))).format = 'bmp' AS is_bmp"
+    ignore_column_names: true

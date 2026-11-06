@@ -9,11 +9,12 @@
 #   make fixtures     # regenerate the committed test/sql/data/* images
 #
 # The SQL E2E suite drives the compiled worker through DuckDB via
-# `haybarn-unittest` (install with: `uv tool install haybarn-unittest`).
+# `haybarn-unittest` (install with: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`;
+# haybarn 2.0 is required: the worker speaks VGI protocol vgi.v3 / 3.1).
 
 # Path to the released worker binary handed to DuckDB as the ATTACH LOCATION.
 WORKER         ?= $(CURDIR)/target/release/image-worker
-# DuckDB sqllogictest runner (haybarn-unittest; on PATH after `uv tool install`).
+# DuckDB sqllogictest runner (haybarn-unittest; on PATH after the install above).
 SQL_RUNNER     ?= haybarn-unittest
 TEST_DIR        = .
 TEST_PATTERN    = test/sql/*
@@ -31,7 +32,7 @@ test-unit:
 # Build the release worker, then run the SQL E2E suite against it. The worker is
 # a compiled binary, so the build must happen before the tests run.
 test-sql: build
-	VGI_IMAGE_WORKER="$(WORKER)" $(SQL_RUNNER) --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)"
+	VGI_IMAGE_WORKER="$(WORKER)" $(SQL_RUNNER) --keep-home --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)"
 
 # clippy (warnings are errors) + formatting check.
 lint:

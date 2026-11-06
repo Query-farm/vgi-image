@@ -208,8 +208,7 @@ inspect the result array).
   STRUCT/MAP/UBIGINT/Binary builders producing exactly the `DataType` that
   `on_bind` declares.
 * **SQL end-to-end** (`make test-sql`): `test/sql/*.test` are DuckDB
-  sqllogictest files run via [`haybarn-unittest`][hb] (`uv tool install
-  haybarn-unittest`). They `ATTACH` the compiled worker and exercise every
+  sqllogictest files run via [`haybarn-unittest`][hb] (`uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`). They `ATTACH` the compiled worker and exercise every
   function over committed fixture images (`test/sql/data/`), which is the only
   layer that crosses the real Arrow IPC boundary. The fixtures are regenerated
   deterministically by `make fixtures` (the `gen_fixtures` example).

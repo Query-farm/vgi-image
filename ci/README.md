@@ -40,5 +40,4 @@ VGI_IMAGE_WORKER="$PWD/target/release/image-worker" \
 ```
 
 Or use the Makefile target `make test-sql`, which builds the release worker and
-runs the suite against a `haybarn-unittest` on `PATH` (`uv tool install
-haybarn-unittest`).
+runs the suite against a `haybarn-unittest` on `PATH` (`uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`).

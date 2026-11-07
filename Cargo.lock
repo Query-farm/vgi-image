@@ -1100,7 +1100,7 @@ dependencies = [
 
 [[package]]
 name = "image-wasm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "image-worker",
  "vgi",
@@ -1118,7 +1118,7 @@ dependencies = [
 
 [[package]]
 name = "image-worker"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "arrow-array",
  "arrow-buffer",

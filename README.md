@@ -16,7 +16,7 @@ DuckDB launches and talks to over Apache Arrow. You `ATTACH` it and call its
 functions like any other.
 
 ```sql
-ATTACH 'img' (TYPE vgi, LOCATION './target/release/image-worker');
+ATTACH 'img' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-image@v0.2.0');
 SET search_path = 'img.main';
 
 SELECT image_info(data).* FROM read_blob('photos/*.jpg');
@@ -27,23 +27,52 @@ SELECT image_info(data).* FROM read_blob('photos/*.jpg');
 
 ## Quick start
 
-**1. Build the worker** (needs Rust 1.97+):
+Every [GitHub release](https://github.com/Query-farm/vgi-image/releases) ships a prebuilt worker binary. The `vgi` extension downloads the one for your platform, checks its SHA-256 and caches it, so there is nothing to install besides DuckDB:
+
+```sql
+INSTALL vgi FROM community;
+LOAD vgi;
+
+ATTACH 'img' AS img (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-image@v0.2.0');
+
+-- Decode an image BLOB's header and read its detected format.
+SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format;
+
+-- Compute the 64-bit DCT perceptual hash of an image BLOB.
+SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));
+```
+
+DuckDB's built-in `read_blob('*.jpg')` is the easy way to get image bytes into a `BLOB` column to feed these functions.
+
+Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.2.0` to move to a newer release.
+
+### Other ways to run it
+
+- **Docker** (the image bundles the worker; needs a container runtime):
+
+  ```sql
+  ATTACH 'img' AS img (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-image:0.2.0');
+  ```
+
+- **Manual download.** Download the archive for your platform from the [releases page](https://github.com/Query-farm/vgi-image/releases), verify it against its `.sha256` file (a cosign `.cosign.bundle` is published alongside), unpack it, and set `LOCATION` to the path of the extracted worker executable.
+
+### Build from source
+
+Build the worker with Cargo (needs Rust 1.97+):
 
 ```sh
 cargo build --release          # produces target/release/image-worker
 ```
 
-**2. Attach it in DuckDB** (any DuckDB with the `vgi` community extension):
+then attach the local binary:
 
 ```sql
-INSTALL vgi FROM community;    -- one time
 ATTACH 'img' (TYPE vgi, LOCATION '/absolute/path/to/image-worker');
 SET search_path = 'img.main';   -- so you can call functions unqualified
 ```
 
 Use an **absolute** `LOCATION` (it's resolved relative to DuckDB's working
-directory). DuckDB's built-in `read_blob('*.jpg')` is the easy way to get image
-bytes into a `BLOB` column to feed these functions.
+directory). See [Development](#development) for the test and lint commands.
 
 ---
 

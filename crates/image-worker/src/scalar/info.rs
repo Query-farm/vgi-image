@@ -68,6 +68,7 @@ impl ScalarFunction for ImageInfo {
                 expected_output: None,
             }],
             tags,
+            return_type: Some(DataType::Struct(struct_fields())),
             ..Default::default()
         }
     }

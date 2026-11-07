@@ -58,6 +58,7 @@ impl ScalarFunction for Exif {
                 expected_output: None,
             }],
             tags,
+            return_type: Some(map_varchar_varchar_type()),
             ..Default::default()
         }
     }
@@ -137,6 +138,7 @@ impl ScalarFunction for ExifGps {
                 expected_output: None,
             }],
             tags,
+            return_type: Some(DataType::Struct(gps_fields())),
             ..Default::default()
         }
     }

@@ -13,7 +13,7 @@ Built on the `vgi` crate (crates.io), modeled on `vgi-fixedformat` /
 ## Layout
 
 ```
-Cargo.toml                         workspace; pins vgi = "0.49.2", arrow 59 (VGI protocol 3.1 → haybarn 2.0)
+Cargo.toml                         workspace; pins vgi = "0.50.0", arrow 59 (VGI protocol 3.2 → haybarn 2.0)
 crates/image-worker/
   src/main.rs                      Worker::new(); registers scalars
   src/imaging.rs                   PURE logic (no Arrow): decode/exif/gps/hash/thumbnail/convert + unit tests

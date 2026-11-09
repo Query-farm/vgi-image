@@ -148,6 +148,7 @@ pub mod test_support {
             input_schema: None,
             execution_id: Vec::new(),
             init_opaque_data: Vec::new(),
+            transaction_opaque_data: None,
             arguments,
             settings: Default::default(),
             secrets: Default::default(),

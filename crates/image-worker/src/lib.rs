@@ -55,7 +55,13 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         tags: vec![
             (
                 "vgi.title".to_string(),
-                "Image Inspection & Transformation".to_string(),
+                "Image Toolkit".to_string(),
+            ),
+            (
+                "vgi.subtitle".to_string(),
+                "Decode images, read EXIF and GPS tags, spot near-duplicates by perceptual \
+                 hash, and make thumbnails."
+                    .to_string(),
             ),
             (
                 "vgi.keywords".to_string(),
@@ -145,7 +151,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             tags: vec![
-                ("vgi.title".to_string(), "Image — main".to_string()),
+                ("vgi.title".to_string(), "Image Functions".to_string()),
                 (
                     "vgi.keywords".to_string(),
                     crate::meta::keywords_json(

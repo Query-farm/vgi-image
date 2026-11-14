@@ -133,7 +133,7 @@ impl ScalarFunction for ThumbnailFit {
             crate::meta::sample_png_expr()
         );
         let example_desc =
-            "Generate a 64x64 PNG thumbnail with an explicit box size and output format.";
+            "Generate a PNG thumbnail fitting a 64x64 box, choosing box size and output format.";
         let mut tags = crate::meta::object_tags(
             "Generate Image Thumbnail (sized)",
             "Resize an image `BLOB` to fit within a `width` x `height` box (aspect-preserving; \

@@ -87,7 +87,7 @@ directory). See [Development](#development) for the test and lint commands.
 | `dhash(blob)` | scalar → UBIGINT | 64-bit difference (gradient) hash |
 | `ahash(blob)` | scalar → UBIGINT | 64-bit average hash |
 | `phash_distance(a, b)` | scalar → INT | Hamming distance (0–64) between two hashes |
-| `thumbnail(blob)` | scalar → BLOB | Aspect-preserving 128×128 JPEG thumbnail (zero-config) |
+| `thumbnail(blob)` | scalar → BLOB | Aspect-preserving JPEG thumbnail fitting 128×128, never upscaled (zero-config) |
 | `thumbnail_fit(blob, width, height, format)` | scalar → BLOB | Aspect-preserving resize into a `width`×`height` box, re-encoded to `format` |
 | `convert(blob, format)` | scalar → BLOB | Decode and re-encode to another format |
 
@@ -141,7 +141,7 @@ and good at catching crops/edits; `ahash` is the simplest/fastest.
 ### `thumbnail` / `convert` — resize & re-encode
 
 ```sql
--- Zero-config 128×128 JPEG thumbnails:
+-- Zero-config JPEG thumbnails fitting a 128×128 box:
 SELECT file, thumbnail(content) AS thumb FROM read_blob('photos/*');
 
 -- Write explicit 256px JPEG thumbnails out to files. width/height/format are
@@ -170,7 +170,8 @@ ORDER BY phash_distance DESC, file;
 ```
 
 `thumbnail` / `thumbnail_fit` only ever **shrink** and always **preserve aspect
-ratio** (a 100×50 image into a 128×128 box becomes 128×64). All three functions
+ratio** (a 400×200 image into a 128×128 box becomes 128×64; a 100×50 image
+already fits, so it stays 100×50 and is only re-encoded). All three functions
 take/return `BLOB`. Supported output formats: `jpeg`, `png`, `webp`, `gif`,
 `bmp`, `tiff` (JPEG output drops any alpha channel).
 

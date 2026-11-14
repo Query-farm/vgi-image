@@ -1,0 +1,24 @@
+{
+  "kind": "Unmodified deterministic synthetic image fixtures; no real photographs. GPS JPEG carries deliberately injected synthetic EXIF coordinates, not an observed location.",
+  "repository": "https://github.com/Query-farm/vgi-image",
+  "revision": "35a4f5c0d382df0030e5876eaddfe79d3caad265",
+  "source_directory": "test/sql/data",
+  "generator": "crates/image-worker/examples/gen_fixtures.rs",
+  "files": [
+    {
+      "file": "gps.jpg",
+      "bytes": 4750,
+      "sha256": "1690d5027eb5c14515a3edc60930e61446a7af69390dd707b3b809eee395f989"
+    },
+    {
+      "file": "gradient.jpg",
+      "bytes": 4612,
+      "sha256": "20e6709b6e749085fc901ac68f23e0245c902634c16c42e710a69f5788887cae"
+    },
+    {
+      "file": "gradient.png",
+      "bytes": 19082,
+      "sha256": "f39d7f3013c4de01a063e217b6377559c3a9db5ac42db5c3f9a5c250fe3a1069"
+    }
+  ]
+}

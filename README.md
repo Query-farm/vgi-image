@@ -273,3 +273,7 @@ Written by [Query.Farm](https://query.farm).
 
 Copyright 2026 Query Farm LLC - https://query.farm
 
+
+## Executed notebook
+
+[Compare image similarity, file identity and metadata](notebooks/README.md) through the pinned native worker using unchanged synthetic fixtures.

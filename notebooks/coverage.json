@@ -1,0 +1,405 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/catalog-released.json",
+      "sha256": "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "catalog_sha256": "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+        "notes": "All ten scalar surfaces included, no names or difficult input/format modes excluded from the named-surface denominator. Named-surface coverage does not imply every argument mode or encoder is exercised. Exhaustive public-main registration at c6e37849c910c7ccfe773373d201df89c8a062e2 finds ten scalar names, including the three generated perceptual-hash names, and no relation/macro/authentication/write surfaces. Signatures are unchanged from the actual v0.4.0 catalog. Current imaging::thumbnail adds a no-upscale guard shared by thumbnail and thumbnail_fit: a source fitting the box is re-encoded at original size. The released larger-box experiment therefore differs from current behavior; the default shrinking calls are unaffected. Complete source diff and registration evidence are retained. Current-interface mappings are compatibility-reviewed, not evidence of exact current execution or universal behavioral equivalence. No current source build/exact-current execution is claimed."
+      }
+    },
+    "current": {
+      "path": "coverage/catalog-current.json",
+      "sha256": "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "catalog_sha256": "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85",
+        "notes": "All ten scalar surfaces included, no names or difficult input/format modes excluded from the named-surface denominator. Named-surface coverage does not imply every argument mode or encoder is exercised. Exhaustive public-main registration at c6e37849c910c7ccfe773373d201df89c8a062e2 finds ten scalar names, including the three generated perceptual-hash names, and no relation/macro/authentication/write surfaces. Signatures are unchanged from the actual v0.4.0 catalog. Current imaging::thumbnail adds a no-upscale guard shared by thumbnail and thumbnail_fit: a source fitting the box is re-encoded at original size. The released larger-box experiment therefore differs from current behavior; the default shrinking calls are unaffected. Complete source diff and registration evidence are retained. Current-interface mappings are compatibility-reviewed, not evidence of exact current execution or universal behavioral equivalence. No current source build/exact-current execution is claimed."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "01_similarity_is_not_file_identity.ipynb",
+      "sha256": "1541d9b9e74fa3e9a09b556f4bc4e84326c72a23add429f5ad49fb5b00b5a7eb",
+      "execution": {
+        "path": "coverage/run-01.json",
+        "sha256": "513d29158c0b46de6055822e13069f40459a083b762a4c3df65f9d44f75e2fdb"
+      }
+    },
+    {
+      "path": "02_dimensions_bytes_and_metadata_are_separate.ipynb",
+      "sha256": "3947a273499de7b83322d1e17486dfeb7752389a4ab87bcab9a527718191748f",
+      "execution": {
+        "path": "coverage/run-02.json",
+        "sha256": "6928db8726cf47e860ddc359e31c1d7990f1049f6125bd0ce6187ebe286f60b9"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "image_info"
+      },
+      "notebook": "01_similarity_is_not_file_identity.ipynb",
+      "sql": [
+        {
+          "cell": "90e5f0a2",
+          "reference": "img.main.image_info"
+        }
+      ],
+      "narrative_cells": [
+        "a6665ca5"
+      ],
+      "result_cells": [
+        "b2030f9e",
+        "d55679d5"
+      ],
+      "interpretation_cells": [
+        "b2030f9e"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "1541d9b9e74fa3e9a09b556f4bc4e84326c72a23add429f5ad49fb5b00b5a7eb",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Separate decoded image dimensions/format from byte identity and metadata.",
+        "finding": "Three generated files all decode to 160 by120 pixels, with PNG/JPEG formats, but have three distinct byte SHA-256 identities. The second story reuses image_info on returned BLOBs to verify dimensions and formats; source size alone is not output storage size."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "exif_gps"
+      },
+      "notebook": "01_similarity_is_not_file_identity.ipynb",
+      "sql": [
+        {
+          "cell": "90e5f0a2",
+          "reference": "img.main.exif_gps"
+        }
+      ],
+      "narrative_cells": [
+        "a6665ca5"
+      ],
+      "result_cells": [
+        "b2030f9e",
+        "d55679d5",
+        "3cb75a33"
+      ],
+      "interpretation_cells": [
+        "3cb75a33"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "1541d9b9e74fa3e9a09b556f4bc4e84326c72a23add429f5ad49fb5b00b5a7eb",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Retain missing GPS as a distinct state and inspect metadata disagreements among perceptually similar files.",
+        "finding": "Only the deliberately tagged JPEG has a GPS result. The zero-pHash-distance JPEG pair has different GPS presence and different byte hashes. Raising the review threshold selects additional pairs without changing any metadata; missing GPS is not interpreted as a zero coordinate."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "phash"
+      },
+      "notebook": "01_similarity_is_not_file_identity.ipynb",
+      "sql": [
+        {
+          "cell": "90e5f0a2",
+          "reference": "img.main.phash"
+        }
+      ],
+      "narrative_cells": [
+        "74d434bf"
+      ],
+      "result_cells": [
+        "746a70b5",
+        "3cb75a33"
+      ],
+      "interpretation_cells": [
+        "3cb75a33"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "1541d9b9e74fa3e9a09b556f4bc4e84326c72a23add429f5ad49fb5b00b5a7eb",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Build perceptual review candidates without equating them to byte-identical files.",
+        "finding": "The generated JPEG pair has zero pHash distance despite distinct file bytes; each PNG/JPEG pair differs by12bits. The inclusive8-bit rule selects one of three pairs;16bits selects all three. This related fixture cannot estimate library-scale accuracy."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "dhash"
+      },
+      "notebook": "01_similarity_is_not_file_identity.ipynb",
+      "sql": [
+        {
+          "cell": "90e5f0a2",
+          "reference": "img.main.dhash"
+        }
+      ],
+      "narrative_cells": [
+        "74d434bf"
+      ],
+      "result_cells": [
+        "746a70b5",
+        "3cb75a33"
+      ],
+      "interpretation_cells": [
+        "3cb75a33"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "1541d9b9e74fa3e9a09b556f4bc4e84326c72a23add429f5ad49fb5b00b5a7eb",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Compare a different fingerprint method on the same fixed population.",
+        "finding": "All three unique pairs have zero dHash distance while byte identities remain distinct and pHash/aHash differ on PNG/JPEG pairs. A zero method-specific distance does not prove identical bytes, metadata or equal calibration across algorithms."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "ahash"
+      },
+      "notebook": "01_similarity_is_not_file_identity.ipynb",
+      "sql": [
+        {
+          "cell": "90e5f0a2",
+          "reference": "img.main.ahash"
+        }
+      ],
+      "narrative_cells": [
+        "74d434bf"
+      ],
+      "result_cells": [
+        "746a70b5",
+        "3cb75a33"
+      ],
+      "interpretation_cells": [
+        "3cb75a33"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "1541d9b9e74fa3e9a09b556f4bc4e84326c72a23add429f5ad49fb5b00b5a7eb",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Expose algorithm-specific sensitivity using the same related files.",
+        "finding": "aHash differs by one bit for each PNG/JPEG pair and by zero for the JPEG pair; dHash is zero throughout and pHash reaches12. The chart states its observed0–12scale and the possible0–64range. Equal numeric thresholds are not established as equivalent between algorithms."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "phash_distance"
+      },
+      "notebook": "01_similarity_is_not_file_identity.ipynb",
+      "sql": [
+        {
+          "cell": "2b7dd627",
+          "reference": "img.main.phash_distance"
+        }
+      ],
+      "narrative_cells": [
+        "74d434bf"
+      ],
+      "result_cells": [
+        "746a70b5",
+        "3cb75a33",
+        "a9e167a7"
+      ],
+      "interpretation_cells": [
+        "3cb75a33"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "1541d9b9e74fa3e9a09b556f4bc4e84326c72a23add429f5ad49fb5b00b5a7eb",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Measure Hamming distance across same-width fingerprints and apply a transparent inclusive review rule.",
+        "finding": "Three unique pairs are accounted for. The8→16-bit experiment changes candidates1→3 while all source facts and distances remain fixed. Eight invariants check bounds, self-distance, symmetry, hash type and population accounting; selection does not authorize deletion."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "exif"
+      },
+      "notebook": "02_dimensions_bytes_and_metadata_are_separate.ipynb",
+      "sql": [
+        {
+          "cell": "transform-attach",
+          "reference": "img.main.exif"
+        }
+      ],
+      "narrative_cells": [
+        "transform-input-story"
+      ],
+      "result_cells": [
+        "transform-tag-result",
+        "transform-audit-result"
+      ],
+      "interpretation_cells": [
+        "transform-audit-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "3947a273499de7b83322d1e17486dfeb7752389a4ab87bcab9a527718191748f",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Inspect the full EXIF map before and after re-encoding rather than substituting a preview for metadata evidence.",
+        "finding": "The source has four deliberately injected GPS-related EXIF entries. All three returned encodings expose empty EXIF maps and absent GPS through this reader. An observed empty map is not a universal metadata-sanitization or privacy guarantee."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "thumbnail"
+      },
+      "notebook": "02_dimensions_bytes_and_metadata_are_separate.ipynb",
+      "sql": [
+        {
+          "cell": "transform-calls",
+          "reference": "img.main.thumbnail"
+        }
+      ],
+      "narrative_cells": [
+        "transform-query-story"
+      ],
+      "result_cells": [
+        "transform-audit-result",
+        "transform-contact",
+        "transform-chart",
+        "transform-check-result"
+      ],
+      "interpretation_cells": [
+        "transform-audit-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "3947a273499de7b83322d1e17486dfeb7752389a4ab87bcab9a527718191748f",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Measure the zero-configuration JPEG thumbnail as a separate artifact contract.",
+        "finding": "The default128-pixel JPEG box returns128 by96 pixels and3069bytes, versus160 by120 and4750bytes in the source. EXIF/GPS are absent. This row remains unchanged when only the explicit PNG box changes; the source is retained."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "thumbnail_fit"
+      },
+      "notebook": "02_dimensions_bytes_and_metadata_are_separate.ipynb",
+      "sql": [
+        {
+          "cell": "transform-calls",
+          "reference": "img.main.thumbnail_fit"
+        }
+      ],
+      "narrative_cells": [
+        "transform-query-story"
+      ],
+      "result_cells": [
+        "transform-audit-result",
+        "transform-contact",
+        "transform-chart",
+        "transform-check-result"
+      ],
+      "interpretation_cells": [
+        "transform-audit-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "3947a273499de7b83322d1e17486dfeb7752389a4ab87bcab9a527718191748f",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Test the explicit PNG bounding box, measured storage and released upscale behavior.",
+        "finding": "At80pixels the released worker returns80 by60pixels and6059bytes; at240 it returns240 by180 and33579bytes. The experiment changes only that rendition, keeps source/default/BMP fixed, and demonstrates the old release upscaling. Current public source has a no-upscale guard and would retain160 by120; current runtime is not claimed tested."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "convert"
+      },
+      "notebook": "02_dimensions_bytes_and_metadata_are_separate.ipynb",
+      "sql": [
+        {
+          "cell": "transform-calls",
+          "reference": "img.main.convert"
+        }
+      ],
+      "narrative_cells": [
+        "transform-query-story"
+      ],
+      "result_cells": [
+        "transform-audit-result",
+        "transform-contact",
+        "transform-chart",
+        "transform-check-result"
+      ],
+      "interpretation_cells": [
+        "transform-audit-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-14T20:23:54.325590+00:00",
+        "notebook_sha256": "3947a273499de7b83322d1e17486dfeb7752389a4ab87bcab9a527718191748f",
+        "catalog_sha256": [
+          "d710ea8182b27f3750e8693a94a604da438676f6650a3ce10e3646c548bcc623",
+          "75cca8d27163c1ad2d7d73ad6ae06060ceec949f28f722ac25d4f9d8f1288c85"
+        ],
+        "purpose": "Separate full-size container conversion from thumbnail dimensions and encoded storage size.",
+        "finding": "BMP conversion keeps160 by120pixels but grows to57654bytes and loses the observed EXIF/GPS results. Dimensions do not prove pixel identity or image quality. The BMP row is unchanged by the PNG-box experiment, and all11 artifact checks pass."
+      }
+    }
+  ]
+}

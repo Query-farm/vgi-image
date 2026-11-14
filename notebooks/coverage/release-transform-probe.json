@@ -1,0 +1,93 @@
+{
+  "basis": "Actual native v0.4.0 calls, each transform materialized in a separate SELECT; injected synthetic GPS fixture only.",
+  "results": [
+    {
+      "case": "input",
+      "query": "SELECT octet_length(content),img.main.image_info(content),img.main.exif(content),img.main.exif_gps(content) FROM input",
+      "result": [
+        4750,
+        {
+          "format": "jpeg",
+          "width": 160,
+          "height": 120,
+          "color": "rgb8",
+          "has_alpha": false
+        },
+        {
+          "GPSLatitudeRef": "N",
+          "GPSLatitude": "37 deg 48 min 30 sec N",
+          "GPSLongitudeRef": "W",
+          "GPSLongitude": "122 deg 25 min 9 sec W"
+        },
+        {
+          "lat": 37.80833333333333,
+          "lon": -122.41916666666667
+        }
+      ]
+    },
+    {
+      "case": "t_default",
+      "query": "SELECT octet_length(content),img.main.image_info(content),img.main.exif(content),img.main.exif_gps(content) FROM t_default",
+      "result": [
+        3069,
+        {
+          "format": "jpeg",
+          "width": 128,
+          "height": 96,
+          "color": "rgb8",
+          "has_alpha": false
+        },
+        {},
+        null
+      ]
+    },
+    {
+      "case": "t_small",
+      "query": "SELECT octet_length(content),img.main.image_info(content),img.main.exif(content),img.main.exif_gps(content) FROM t_small",
+      "result": [
+        6059,
+        {
+          "format": "png",
+          "width": 80,
+          "height": 60,
+          "color": "rgb8",
+          "has_alpha": false
+        },
+        {},
+        null
+      ]
+    },
+    {
+      "case": "t_large",
+      "query": "SELECT octet_length(content),img.main.image_info(content),img.main.exif(content),img.main.exif_gps(content) FROM t_large",
+      "result": [
+        33579,
+        {
+          "format": "png",
+          "width": 240,
+          "height": 180,
+          "color": "rgb8",
+          "has_alpha": false
+        },
+        {},
+        null
+      ]
+    },
+    {
+      "case": "t_bmp",
+      "query": "SELECT octet_length(content),img.main.image_info(content),img.main.exif(content),img.main.exif_gps(content) FROM t_bmp",
+      "result": [
+        57654,
+        {
+          "format": "bmp",
+          "width": 160,
+          "height": 120,
+          "color": "rgb8",
+          "has_alpha": false
+        },
+        {},
+        null
+      ]
+    }
+  ]
+}

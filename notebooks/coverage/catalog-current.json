@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "repository": "Query-farm/vgi-image",
+  "revision": "c6e37849c910c7ccfe773373d201df89c8a062e2",
+  "captured_at": "2026-11-14T20:23:54.325590+00:00",
+  "default_schema": "main",
+  "scope": "all_public_functions_and_tables",
+  "complete": true,
+  "evidence": [
+    {
+      "path": "coverage/catalog-provenance.json",
+      "sha256": "12604b2225f73bc05f32675878419e27f2c43eb670a14c432e9ef6bc68f42ebc",
+      "description": "Precise runtime/source identities and explicit semantic difference."
+    },
+    {
+      "path": "coverage/current-source-registration.json",
+      "sha256": "775ea8accc35eb87f729b3e1b85b40fc0c84e8126b185d42fc2f86cc961c96dd",
+      "description": "Exhaustive current public registration/declarations, immutable source links/hashes and full source diff. Current runtime not rebuilt."
+    }
+  ],
+  "objects": [
+    {
+      "schema": "main",
+      "name": "thumbnail_fit",
+      "kind": "function",
+      "signatures": [
+        "thumbnail_fit(ANY, BIGINT, BIGINT, VARCHAR) -> BLOB"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "ahash",
+      "kind": "function",
+      "signatures": [
+        "ahash(ANY) -> UBIGINT"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "image_info",
+      "kind": "function",
+      "signatures": [
+        "image_info(ANY) -> STRUCT(format VARCHAR, width INTEGER, height INTEGER, color VARCHAR, has_alpha BOOLEAN)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "exif_gps",
+      "kind": "function",
+      "signatures": [
+        "exif_gps(ANY) -> STRUCT(lat DOUBLE, lon DOUBLE)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "convert",
+      "kind": "function",
+      "signatures": [
+        "convert(ANY, VARCHAR) -> BLOB"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "dhash",
+      "kind": "function",
+      "signatures": [
+        "dhash(ANY) -> UBIGINT"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "exif",
+      "kind": "function",
+      "signatures": [
+        "exif(ANY) -> MAP(VARCHAR, VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "phash",
+      "kind": "function",
+      "signatures": [
+        "phash(ANY) -> UBIGINT"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "phash_distance",
+      "kind": "function",
+      "signatures": [
+        "phash_distance(UBIGINT, UBIGINT) -> INTEGER"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "thumbnail",
+      "kind": "function",
+      "signatures": [
+        "thumbnail(ANY) -> BLOB"
+      ],
+      "authentication": "none",
+      "access": "read"
+    }
+  ]
+}

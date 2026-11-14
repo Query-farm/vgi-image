@@ -1,0 +1,399 @@
+{
+  "query": "SELECT * FROM duckdb_functions() WHERE database_name='img'",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "function_name",
+    "alias_of",
+    "function_type",
+    "description",
+    "comment",
+    "tags",
+    "return_type",
+    "parameters",
+    "parameter_types",
+    "varargs",
+    "macro_definition",
+    "has_side_effects",
+    "internal",
+    "extension_name",
+    "function_oid",
+    "examples",
+    "stability",
+    "categories"
+  ],
+  "rows": [
+    [
+      "img",
+      "22592",
+      "main",
+      "thumbnail_fit",
+      null,
+      "scalar",
+      "Resize an image BLOB to fit width×height (aspect-preserving) and re-encode to a format",
+      null,
+      {
+        "vgi.category": "transformation",
+        "vgi.doc_llm": "Resize an image `BLOB` to fit within a `width` x `height` box (aspect-preserving) and re-encode it to `format`, returning the thumbnail as a `BLOB`. `width`, `height`, and `format` are POSITIONAL constants — `thumbnail_fit(img, 64, 64, 'png')` — because DuckDB does not bind named arguments to scalar functions. `format` is one of jpeg, png, webp, gif, bmp, tiff. Returns NULL for NULL input and errors on a non-positive dimension, an unknown format, or undecodable bytes. Use `thumbnail(img)` for the 128x128 JPEG default.",
+        "vgi.doc_md": "Resize an image `BLOB` to fit a `width` x `height` box and re-encode it to `format` (jpeg, png, webp, gif, bmp, tiff); returns a thumbnail `BLOB`.",
+        "vgi.example_queries": "[{\"description\":\"Generate a 64x64 PNG thumbnail with an explicit box size and output format.\",\"sql\":\"SELECT img.main.thumbnail_fit(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 64, 64, 'png');\"}]",
+        "vgi.keywords": "[\"thumbnail\",\"resize\",\"downscale\",\"preview\",\"gallery\",\"aspect ratio\",\"re-encode\",\"width\",\"height\",\"jpeg\",\"png\",\"webp\",\"image transform\"]",
+        "vgi.title": "Generate Image Thumbnail (sized)"
+      },
+      "BLOB",
+      [
+        "blob",
+        "width",
+        "height",
+        "format"
+      ],
+      [
+        "ANY",
+        "BIGINT",
+        "BIGINT",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22605,
+      [
+        "SELECT img.main.thumbnail_fit(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 64, 64, 'png');"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "ahash",
+      null,
+      "scalar",
+      "64-bit average hash of an image BLOB (UBIGINT)",
+      null,
+      {
+        "vgi.category": "hashing",
+        "vgi.doc_llm": "Compute a 64-bit average hash (aHash) of an image `BLOB`, packed into a `UBIGINT`. Each bit marks whether a downsampled pixel is above the mean brightness, giving a fast similarity fingerprint for near-duplicate detection via phash_distance. Returns NULL for NULL input and errors on undecodable bytes.",
+        "vgi.doc_md": "Compute the 64-bit average hash (aHash) of an image as a `UBIGINT`. Pair with `phash_distance` for similarity.",
+        "vgi.example_queries": "[{\"description\":\"Compute the 64-bit average hash of an image.\",\"sql\":\"SELECT img.main.ahash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));\"}]",
+        "vgi.keywords": "[\"ahash\",\"average hash\",\"mean hash\",\"image fingerprint\",\"near-duplicate\",\"similarity\",\"deduplication\",\"image hash\",\"64-bit\"]",
+        "vgi.title": "Average Hash (Mean)"
+      },
+      "UBIGINT",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22596,
+      [
+        "SELECT img.main.ahash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "image_info",
+      null,
+      "scalar",
+      "Decode an image BLOB's header into a STRUCT(format, width, height, color, has_alpha)",
+      null,
+      {
+        "vgi.category": "inspection",
+        "vgi.doc_llm": "Decode the header of an image `BLOB` into a `STRUCT` of format (png, jpeg, gif, bmp, tiff, webp), pixel width and height, color model, and whether it has an alpha channel. Returns NULL for a NULL input and errors on undecodable bytes. Use to inspect, validate, or catalogue images without fully decoding pixels.",
+        "vgi.doc_md": "Decode an image `BLOB`'s header into `STRUCT(format, width, height, color, has_alpha)`.",
+        "vgi.example_queries": "[{\"description\":\"Decode an image BLOB's header into format, width, height, color model and alpha-channel flag.\",\"sql\":\"SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format;\"}]",
+        "vgi.keywords": "[\"image info\",\"image_info\",\"dimensions\",\"width\",\"height\",\"format\",\"color model\",\"alpha\",\"header\",\"inspect image\",\"metadata\",\"decode\"]",
+        "vgi.title": "Decode Image Header Info"
+      },
+      "STRUCT(format VARCHAR, width INTEGER, height INTEGER, color VARCHAR, has_alpha BOOLEAN)",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22601,
+      [
+        "SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "exif_gps",
+      null,
+      "scalar",
+      "Extract decimal GPS lat/lon from EXIF as a STRUCT(lat, lon); NULL if absent",
+      null,
+      {
+        "vgi.category": "metadata",
+        "vgi.doc_llm": "Extract the decimal GPS latitude and longitude from an image's EXIF GPS block as a `STRUCT(lat DOUBLE, lon DOUBLE)`. Returns a NULL struct when the image has no GPS tags or input is NULL. Use to map and geo-filter geotagged photos.",
+        "vgi.doc_md": "Extract decimal GPS coordinates from an image's EXIF as `STRUCT(lat, lon)`; NULL when no geotag is present.",
+        "vgi.example_queries": "[{\"description\":\"Extract decimal latitude and longitude from a geotagged image's EXIF GPS block.\",\"sql\":\"SELECT (img.main.exif_gps(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).lat;\"}]",
+        "vgi.keywords": "[\"gps\",\"geotag\",\"latitude\",\"longitude\",\"coordinates\",\"location\",\"exif gps\",\"geolocation\",\"map photos\",\"decimal degrees\"]",
+        "vgi.title": "Extract EXIF GPS Coordinates"
+      },
+      "STRUCT(lat DOUBLE, lon DOUBLE)",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22600,
+      [
+        "SELECT (img.main.exif_gps(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).lat;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "convert",
+      null,
+      "scalar",
+      "Decode an image BLOB and re-encode it to another format (full resolution)",
+      null,
+      {
+        "vgi.category": "transformation",
+        "vgi.doc_llm": "Decode an image `BLOB` and re-encode it to another format at full resolution, returning the converted `BLOB`. Target formats: jpeg, png, webp, gif, bmp, tiff. Returns NULL for NULL input and errors on an unknown target format or undecodable bytes. Use to normalize a mixed set of images to one format in SQL.",
+        "vgi.doc_md": "Decode an image `BLOB` and re-encode it to another format (jpeg, png, webp, gif, bmp, tiff) at full resolution.",
+        "vgi.example_queries": "[{\"description\":\"Convert an image BLOB to PNG at full resolution.\",\"sql\":\"SELECT img.main.convert(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 'png');\"}]",
+        "vgi.keywords": "[\"convert\",\"transcode\",\"re-encode\",\"format conversion\",\"png\",\"jpeg\",\"webp\",\"gif\",\"bmp\",\"tiff\",\"change format\",\"normalize images\"]",
+        "vgi.title": "Convert Image Format"
+      },
+      "BLOB",
+      [
+        "blob",
+        "format"
+      ],
+      [
+        "ANY",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22597,
+      [
+        "SELECT img.main.convert(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 'png');"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "dhash",
+      null,
+      "scalar",
+      "64-bit difference (gradient) hash of an image BLOB (UBIGINT)",
+      null,
+      {
+        "vgi.category": "hashing",
+        "vgi.doc_llm": "Compute a 64-bit difference (gradient) hash (dHash) of an image `BLOB`, packed into a `UBIGINT`. It encodes horizontal brightness gradients, so visually similar images get similar hashes for near-duplicate detection via phash_distance. Returns NULL for NULL input and errors on undecodable bytes.",
+        "vgi.doc_md": "Compute the 64-bit difference (gradient) hash (dHash) of an image as a `UBIGINT`. Pair with `phash_distance` for similarity.",
+        "vgi.example_queries": "[{\"description\":\"Compute the 64-bit difference (gradient) hash of an image.\",\"sql\":\"SELECT img.main.dhash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));\"}]",
+        "vgi.keywords": "[\"dhash\",\"difference hash\",\"gradient hash\",\"image fingerprint\",\"near-duplicate\",\"similarity\",\"deduplication\",\"image hash\",\"64-bit\"]",
+        "vgi.title": "Difference Hash (Gradient)"
+      },
+      "UBIGINT",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22598,
+      [
+        "SELECT img.main.dhash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "exif",
+      null,
+      "scalar",
+      "Extract EXIF metadata from an image BLOB as a MAP(VARCHAR, VARCHAR)",
+      null,
+      {
+        "vgi.category": "metadata",
+        "vgi.doc_llm": "Extract EXIF metadata from an image `BLOB` as a `MAP(VARCHAR, VARCHAR)` of flattened tag name to string value, e.g. camera Make/Model, exposure, ISO, orientation, and timestamps. Images without EXIF yield an empty (non-null) map; a NULL input yields a NULL map. Use to read camera and capture metadata in SQL.",
+        "vgi.doc_md": "Extract EXIF metadata from an image `BLOB` as a `MAP(VARCHAR, VARCHAR)`; index it like `exif(blob)['Make']`.",
+        "vgi.example_queries": "[{\"description\":\"Read the camera make from an image's EXIF metadata map.\",\"sql\":\"SELECT img.main.exif(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))['Make'] AS camera_make;\"}]",
+        "vgi.keywords": "[\"exif\",\"metadata\",\"camera\",\"make\",\"model\",\"lens\",\"ISO\",\"exposure\",\"orientation\",\"timestamp\",\"tags\",\"map\",\"photo metadata\"]",
+        "vgi.title": "Extract EXIF Metadata Map"
+      },
+      "MAP(VARCHAR, VARCHAR)",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22599,
+      [
+        "SELECT img.main.exif(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))['Make'] AS camera_make;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "phash",
+      null,
+      "scalar",
+      "64-bit DCT perceptual hash of an image BLOB (UBIGINT)",
+      null,
+      {
+        "vgi.category": "hashing",
+        "vgi.doc_llm": "Compute a 64-bit DCT-based perceptual hash (pHash) of an image `BLOB`, packed into a `UBIGINT`. Visually similar images get similar hashes, so comparing hashes (see phash_distance) detects near-duplicates and resized/recompressed copies. Returns NULL for NULL input and errors on undecodable bytes.",
+        "vgi.doc_md": "Compute the 64-bit DCT perceptual hash (pHash) of an image as a `UBIGINT`. Pair with `phash_distance` for near-duplicate detection.",
+        "vgi.example_queries": "[{\"description\":\"Compute the 64-bit DCT perceptual hash of an image for near-duplicate detection.\",\"sql\":\"SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));\"}]",
+        "vgi.executable_examples": "[\n  {\n    \"description\": \"Decode a PNG BLOB's header into format, width and height.\",\n    \"sql\": \"SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format AS format\"\n  },\n  {\n    \"description\": \"Compute the 64-bit DCT perceptual hash of an image.\",\n    \"sql\": \"SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')) AS phash\"\n  },\n  {\n    \"description\": \"Hamming distance between an image's phash and its dhash.\",\n    \"sql\": \"SELECT img.main.phash_distance(img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')), img.main.dhash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))) AS distance\"\n  },\n  {\n    \"description\": \"Read the EXIF metadata map of an image (empty when none present).\",\n    \"sql\": \"SELECT img.main.exif(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')) AS exif\"\n  },\n  {\n    \"description\": \"Convert a PNG BLOB to BMP and report the result byte length.\",\n    \"sql\": \"SELECT octet_length(img.main.convert(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 'bmp')) AS bmp_bytes\"\n  }\n]",
+        "vgi.keywords": "[\"phash\",\"perceptual hash\",\"dct hash\",\"image fingerprint\",\"near-duplicate\",\"similarity\",\"deduplication\",\"image hash\",\"64-bit\"]",
+        "vgi.title": "Perceptual Hash (DCT)"
+      },
+      "UBIGINT",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22602,
+      [
+        "SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "phash_distance",
+      null,
+      "scalar",
+      "Hamming distance (0-64) between two packed 64-bit perceptual hashes",
+      null,
+      {
+        "vgi.category": "hashing",
+        "vgi.doc_llm": "Compute the Hamming distance (0-64) between two packed 64-bit perceptual hashes — the number of differing bits. Smaller distances mean more visually similar images; 0 means identical hashes. Pair with phash/dhash/ahash to rank near-duplicates. Returns NULL when either hash is NULL.",
+        "vgi.doc_md": "Hamming distance between two 64-bit perceptual hashes (0 = identical, higher = more different).",
+        "vgi.example_queries": "[{\"description\":\"Measure how similar two images are by the Hamming distance between their perceptual hashes (0 = identical).\",\"sql\":\"SELECT img.main.phash_distance(img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')), img.main.dhash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))) AS distance;\"}]",
+        "vgi.keywords": "[\"hamming distance\",\"phash_distance\",\"similarity\",\"near-duplicate\",\"compare hashes\",\"bit difference\",\"image similarity\",\"deduplication\"]",
+        "vgi.title": "Perceptual Hash Hamming Distance"
+      },
+      "INTEGER",
+      [
+        "a",
+        "b"
+      ],
+      [
+        "UBIGINT",
+        "UBIGINT"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22603,
+      [
+        "SELECT img.main.phash_distance(img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')), img.main.dhash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))) AS distance;"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "img",
+      "22592",
+      "main",
+      "thumbnail",
+      null,
+      "scalar",
+      "Generate a 128x128 aspect-preserving JPEG thumbnail of an image BLOB",
+      null,
+      {
+        "vgi.category": "transformation",
+        "vgi.doc_llm": "Generate an aspect-preserving 128x128 JPEG thumbnail of an image `BLOB`, returned as a `BLOB`. This is the one-argument convenience form; to choose the box size or output format explicitly, use `thumbnail_fit(img, width, height, format)`. Returns NULL for NULL input and errors on undecodable bytes. Use to build previews and image galleries in SQL.",
+        "vgi.doc_md": "Generate a 128x128 aspect-preserving JPEG thumbnail of an image `BLOB` (use `thumbnail_fit` to control size and format).",
+        "vgi.example_queries": "[{\"description\":\"Generate a 128x128 aspect-preserving JPEG thumbnail of an image.\",\"sql\":\"SELECT img.main.thumbnail(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));\"}]",
+        "vgi.keywords": "[\"thumbnail\",\"resize\",\"downscale\",\"preview\",\"gallery\",\"aspect ratio\",\"re-encode\",\"jpeg\",\"image transform\"]",
+        "vgi.title": "Generate Image Thumbnail"
+      },
+      "BLOB",
+      [
+        "blob"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22604,
+      [
+        "SELECT img.main.thumbnail(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'));"
+      ],
+      "CONSISTENT",
+      []
+    ]
+  ]
+}

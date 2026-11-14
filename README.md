@@ -274,6 +274,6 @@ Written by [Query.Farm](https://query.farm).
 Copyright 2026 Query Farm LLC - https://query.farm
 
 
-## Executed notebook
+## Executed notebooks
 
-[Compare image similarity, file identity and metadata](notebooks/README.md) through the pinned native worker using unchanged synthetic fixtures.
+[Compare image similarity, file identity, dimensions and metadata](notebooks/README.md) through two executed examples using the pinned native worker and unchanged synthetic fixtures.

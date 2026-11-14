@@ -1,0 +1,11 @@
+{
+  "repository": "Query-farm/vgi-image",
+  "release_tag": "v0.4.0",
+  "release_revision": "8cc93bc1f8e530febdf0fb89d41caab74697501a",
+  "current_public_revision": "c6e37849c910c7ccfe773373d201df89c8a062e2",
+  "engine": "Haybarn 2.0.0rc11 / VGI e75482339d",
+  "released_launch": "github-auto://Query-farm/vgi-image@v0.4.0",
+  "comparison": "Exhaustive public-main registration at c6e37849c910c7ccfe773373d201df89c8a062e2 finds ten scalar names, including the three generated perceptual-hash names, and no relation/macro/authentication/write surfaces. Signatures are unchanged from the actual v0.4.0 catalog. Current imaging::thumbnail adds a no-upscale guard shared by thumbnail and thumbnail_fit: a source fitting the box is re-encoded at original size. The released larger-box experiment therefore differs from current behavior; the default shrinking calls are unaffected. Complete source diff and registration evidence are retained. Current-interface mappings are compatibility-reviewed, not evidence of exact current execution or universal behavioral equivalence. No current source build/exact-current execution is claimed.",
+  "data_isolation": "Empty temporary SQL secret storage; persistent secrets disabled. Three public repository-generated gradient fixtures, one with deliberately injected synthetic EXIF GPS; no real photos, accounts or private data.",
+  "captured_at": "2026-11-14T20:23:54.325590+00:00"
+}

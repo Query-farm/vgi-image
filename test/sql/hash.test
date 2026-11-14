@@ -75,6 +75,13 @@ FROM read_blob('test/sql/data/gradient.png');
 ----
 true
 
+# A lossless re-encode (PNG → BMP) keeps the exact perceptual hash.
+query I
+SELECT phash_distance(phash(content), phash(convert(content, 'bmp')))
+FROM read_blob('test/sql/data/gradient.png');
+----
+0
+
 # NULL propagates to NULL.
 query I
 SELECT phash(NULL) IS NULL;

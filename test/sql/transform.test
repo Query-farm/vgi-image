@@ -32,6 +32,22 @@ FROM (SELECT image_info(thumbnail(content)) AS s
 ----
 jpeg	128	96
 
+# Thumbnails never upscale: an image already inside the box keeps its own
+# size and is only re-encoded (160x120 into 512x512 stays 160x120; a 2x2 PNG's
+# default thumbnail stays 2x2 rather than being blown up to 128x128).
+query III
+SELECT s.format, s.width, s.height
+FROM (SELECT image_info(thumbnail_fit(content, 512, 512, 'png')) AS s
+      FROM read_blob('test/sql/data/gradient.png')) t;
+----
+png	160	120
+
+query III
+SELECT s.format, s.width, s.height
+FROM (SELECT image_info(thumbnail(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))) AS s) t;
+----
+jpeg	2	2
+
 # The thumbnail is strictly smaller (in bytes) than the source PNG.
 query I
 SELECT octet_length(thumbnail(content)) < octet_length(content)

@@ -61,6 +61,16 @@ implemented — deferred.)
 5. **Fixtures are generated, not hand-authored.** `make fixtures` runs
    `examples/gen_fixtures.rs` to (re)produce `test/sql/data/` deterministically,
    including a decodable JPEG with EXIF GPS injected via an APP1 segment.
+6. **Never upscale.** `image::DynamicImage::thumbnail` scales *up* to fill the
+   box, so `imaging::thumbnail` re-encodes an image that already fits at its own
+   size (a 2x2 icon's `thumbnail` is 2x2, not 128x128).
+7. **Same column + different constants in one SELECT collapse (extension bug).**
+   `SELECT convert(d, 'png'), convert(d, 'bmp') FROM t` returns the PNG twice:
+   the vgi extension erases const args from the expression and its
+   `VgiScalarFunctionBindData::Equals` ignores `const_values`, so DuckDB's
+   common-subexpression elimination merges the calls. Literal inputs are
+   unaffected (constant-folded separately). Examples avoid the pattern until
+   the extension compares `const_values`.
 
 ## Testing
 

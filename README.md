@@ -153,6 +153,20 @@ COPY (
 
 -- Convert a PNG column to WebP at full resolution:
 SELECT convert(content, 'webp') FROM read_blob('icons/*.png');
+
+-- Audit a JPEG re-encode: confirm the copy's format and size, what it costs
+-- in bytes, and that it still looks the same (phash distance near 0):
+WITH copies AS (
+  SELECT file, content AS original, convert(content, 'jpeg') AS jpeg
+  FROM read_blob('icons/*.png')
+)
+SELECT file,
+       image_info(jpeg).width            AS width,
+       octet_length(original)            AS png_bytes,
+       octet_length(jpeg)                AS jpeg_bytes,
+       phash_distance(phash(original), phash(jpeg)) AS phash_distance
+FROM copies
+ORDER BY phash_distance DESC, file;
 ```
 
 `thumbnail` / `thumbnail_fit` only ever **shrink** and always **preserve aspect

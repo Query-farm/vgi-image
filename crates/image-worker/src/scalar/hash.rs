@@ -20,32 +20,34 @@ use crate::arrow_io::blob_bytes;
 use crate::imaging::{self, HashKind};
 
 /// Guaranteed-runnable, catalog-qualified examples (VGI509). Each `sql` is
-/// self-contained: the image BLOB is built inline with `from_hex(...)` of a tiny
-/// valid 2x2 PNG, so every query runs as written against an attached `img`
+/// self-contained: image BLOBs are built inline with `from_hex(...)` of tiny
+/// valid PNGs, so every query runs offline as written against an attached `img`
 /// worker. We omit `expected_result` deliberately — the linter only needs each
 /// query to execute cleanly, and hash/encoder output is an implementation detail.
-const EXECUTABLE_EXAMPLES: &str = r#"[
-  {
-    "description": "Decode a PNG BLOB's header into format, width and height.",
-    "sql": "SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format AS format"
-  },
-  {
-    "description": "Compute the 64-bit DCT perceptual hash of an image.",
-    "sql": "SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')) AS phash"
-  },
-  {
-    "description": "Hamming distance between an image's phash and its dhash.",
-    "sql": "SELECT img.main.phash_distance(img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')), img.main.dhash(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))) AS distance"
-  },
-  {
-    "description": "Read the EXIF metadata map of an image (empty when none present).",
-    "sql": "SELECT img.main.exif(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082')) AS exif"
-  },
-  {
-    "description": "Convert a PNG BLOB to BMP and report the result byte length.",
-    "sql": "SELECT octet_length(img.main.convert(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 'bmp')) AS bmp_bytes"
-  }
-]"#;
+fn executable_examples() -> String {
+    let png = crate::meta::sample_png_expr();
+    crate::meta::example_queries_tag(&[
+        (
+            "Decode a PNG BLOB's header into format, width and height.",
+            format!("SELECT (img.main.image_info({png})).format AS format"),
+        ),
+        (
+            "Compute the 64-bit DCT perceptual hash of an image.",
+            format!("SELECT img.main.phash({png}) AS phash"),
+        ),
+        crate::meta::example_hash_distance(),
+        (
+            "Read the EXIF metadata map of an image (empty when none present).",
+            format!("SELECT img.main.exif({png}) AS exif"),
+        ),
+        (
+            "Convert a PNG BLOB to BMP and report the result byte length.",
+            format!("SELECT octet_length(img.main.convert({png}, 'bmp')) AS bmp_bytes"),
+        ),
+        crate::meta::composed_near_duplicates(),
+    ])
+    .1
+}
 
 /// One of the three perceptual-hash scalar functions. The same struct backs all
 /// three; `name`/`kind` differ.
@@ -135,7 +137,7 @@ impl ScalarFunction for PerceptualHash {
         );
         // The worker carries its one VGI509 executable-examples bundle on `phash`.
         if self.name == "phash" {
-            tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+            tags.push(("vgi.executable_examples".into(), executable_examples()));
         }
         let example_sql = format!(
             "SELECT img.main.{}({});",
@@ -220,13 +222,12 @@ impl ScalarFunction for PhashDistance {
     }
 
     fn metadata(&self) -> FunctionMetadata {
-        let example_sql = format!(
-            "SELECT img.main.phash_distance(img.main.phash({png}), img.main.dhash({png})) \
-             AS distance;",
-            png = crate::meta::sample_png_expr()
-        );
-        let example_desc = "Measure how similar two images are by the Hamming distance \
-                            between their perceptual hashes (0 = identical).";
+        // The basic two-hash comparison first, then a composed pairwise
+        // near-duplicate scan over a small image set.
+        let examples = [
+            crate::meta::example_hash_distance(),
+            crate::meta::composed_near_duplicates(),
+        ];
         let mut tags = crate::meta::object_tags(
             "Perceptual Hash Hamming Distance",
             "Compute the Hamming distance (0-64) between two packed 64-bit perceptual \
@@ -240,19 +241,12 @@ impl ScalarFunction for PhashDistance {
             "hashing",
             "scalar/hash.rs",
         );
-        tags.push(crate::meta::example_queries_tag(&[(
-            example_desc,
-            example_sql.clone(),
-        )]));
+        tags.push(crate::meta::example_queries_tag(&examples));
         FunctionMetadata {
             description: "Hamming distance (0-64) between two packed 64-bit perceptual hashes"
                 .into(),
             return_type: Some(DataType::Int32),
-            examples: vec![FunctionExample {
-                sql: example_sql,
-                description: example_desc.into(),
-                expected_output: None,
-            }],
+            examples: crate::meta::function_examples(&examples),
             tags,
             ..Default::default()
         }

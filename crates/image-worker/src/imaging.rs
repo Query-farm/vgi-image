@@ -267,7 +267,13 @@ pub fn thumbnail(blob: &[u8], max_w: u32, max_h: u32, format: OutFormat) -> Resu
         return Err(err("thumbnail width and height must be positive"));
     }
     let img = decode(blob)?;
-    // `thumbnail` preserves aspect ratio and only ever shrinks.
+    // An image that already fits the box is re-encoded at its own size:
+    // `DynamicImage::thumbnail` scales *up* to fill the box, which would turn a
+    // 2x2 icon into a blurry 128x128 "thumbnail" larger than its source.
+    if img.width() <= max_w && img.height() <= max_h {
+        return encode(&img, format);
+    }
+    // Aspect-preserving downscale into the box.
     let thumb = img.thumbnail(max_w, max_h);
     encode(&thumb, format)
 }
@@ -386,6 +392,20 @@ mod tests {
         // 100x50 fit into 20x20 → 20x10 (aspect preserved).
         assert_eq!(info.width, 20);
         assert_eq!(info.height, 10);
+    }
+
+    #[test]
+    fn thumbnail_never_upscales() {
+        // A source smaller than the box keeps its own size (re-encoded only).
+        let png = make_png(4, 2);
+        let thumb = thumbnail(&png, 128, 128, OutFormat::Jpeg).unwrap();
+        let info = image_info(&thumb).unwrap();
+        assert_eq!(info.format, "jpeg");
+        assert_eq!((info.width, info.height), (4, 2));
+        // One side fits, the other does not: still a downscale, aspect kept.
+        let wide = make_png(40, 10);
+        let info = image_info(&thumbnail(&wide, 20, 128, OutFormat::Png).unwrap()).unwrap();
+        assert_eq!((info.width, info.height), (20, 5));
     }
 
     #[test]

@@ -51,16 +51,18 @@ impl ScalarFunction for Thumbnail {
             "SELECT img.main.thumbnail({});",
             crate::meta::sample_png_expr()
         );
-        let example_desc = "Generate a 128x128 aspect-preserving JPEG thumbnail of an image.";
+        let example_desc =
+            "Generate an aspect-preserving JPEG thumbnail of an image fitting within 128x128.";
         let mut tags = crate::meta::object_tags(
             "Generate Image Thumbnail",
-            "Generate an aspect-preserving 128x128 JPEG thumbnail of an image `BLOB`, returned \
-             as a `BLOB`. This is the one-argument convenience form; to choose the box size or \
+            "Generate an aspect-preserving JPEG thumbnail of an image `BLOB` fitting within \
+             128x128, returned as a `BLOB`. Images already within the box keep their size \
+             (never upscaled). This is the one-argument convenience form; to choose the box size or \
              output format explicitly, use `thumbnail_fit(img, width, height, format)`. Returns \
              NULL for NULL input and errors on undecodable bytes. Use to build previews and \
              image galleries in SQL.",
-            "Generate a 128x128 aspect-preserving JPEG thumbnail of an image `BLOB` (use \
-             `thumbnail_fit` to control size and format).",
+            "Generate an aspect-preserving JPEG thumbnail of an image `BLOB` fitting within \
+             128x128, never upscaled (use `thumbnail_fit` to control size and format).",
             "thumbnail, resize, downscale, preview, gallery, aspect ratio, re-encode, \
              jpeg, image transform",
             "transformation",
@@ -71,8 +73,9 @@ impl ScalarFunction for Thumbnail {
             example_sql.clone(),
         )]));
         FunctionMetadata {
-            description: "Generate a 128x128 aspect-preserving JPEG thumbnail of an image BLOB"
-                .into(),
+            description:
+                "Generate an aspect-preserving JPEG thumbnail of an image BLOB within 128x128"
+                    .into(),
             return_type: Some(DataType::Binary),
             examples: vec![FunctionExample {
                 sql: example_sql,
@@ -133,8 +136,8 @@ impl ScalarFunction for ThumbnailFit {
             "Generate a 64x64 PNG thumbnail with an explicit box size and output format.";
         let mut tags = crate::meta::object_tags(
             "Generate Image Thumbnail (sized)",
-            "Resize an image `BLOB` to fit within a `width` x `height` box (aspect-preserving) \
-             and re-encode it to `format`, returning the thumbnail as a `BLOB`. `width`, \
+            "Resize an image `BLOB` to fit within a `width` x `height` box (aspect-preserving; \
+             an image already inside the box keeps its size) and re-encode it to `format`, returning the thumbnail as a `BLOB`. `width`, \
              `height`, and `format` are POSITIONAL constants — `thumbnail_fit(img, 64, 64, \
              'png')` — because DuckDB does not bind named arguments to scalar functions. \
              `format` is one of jpeg, png, webp, gif, bmp, tiff. Returns NULL for NULL input \
@@ -147,20 +150,17 @@ impl ScalarFunction for ThumbnailFit {
             "transformation",
             "scalar/transform.rs",
         );
-        tags.push(crate::meta::example_queries_tag(&[(
-            example_desc,
-            example_sql.clone(),
-        )]));
+        let examples = [
+            (example_desc, example_sql),
+            crate::meta::composed_thumbnail_audit(),
+        ];
+        tags.push(crate::meta::example_queries_tag(&examples));
         FunctionMetadata {
             description:
                 "Resize an image BLOB to fit width×height (aspect-preserving) and re-encode to a format"
                     .into(),
             return_type: Some(DataType::Binary),
-            examples: vec![FunctionExample {
-                sql: example_sql,
-                description: example_desc.into(),
-                expected_output: None,
-            }],
+            examples: crate::meta::function_examples(&examples),
             tags,
             ..Default::default()
         }
@@ -263,19 +263,16 @@ impl ScalarFunction for Convert {
             "transformation",
             "scalar/transform.rs",
         );
-        tags.push(crate::meta::example_queries_tag(&[(
-            example_desc,
-            example_sql.clone(),
-        )]));
+        let examples = [
+            (example_desc, example_sql),
+            crate::meta::composed_reencode_audit(),
+        ];
+        tags.push(crate::meta::example_queries_tag(&examples));
         FunctionMetadata {
             description:
                 "Decode an image BLOB and re-encode it to another format (full resolution)".into(),
             return_type: Some(DataType::Binary),
-            examples: vec![FunctionExample {
-                sql: example_sql,
-                description: example_desc.into(),
-                expected_output: None,
-            }],
+            examples: crate::meta::function_examples(&examples),
             tags,
             ..Default::default()
         }

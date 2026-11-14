@@ -213,13 +213,10 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                         "Compute the 64-bit DCT perceptual hash of an image BLOB.",
                         format!("SELECT img.main.phash({});", crate::meta::sample_png_expr()),
                     ),
-                    (
-                        "Rank two images by perceptual similarity via the Hamming distance of their phashes.",
-                        format!(
-                            "SELECT img.main.phash_distance(img.main.phash({png}), img.main.dhash({png})) AS distance;",
-                            png = crate::meta::sample_png_expr()
-                        ),
-                    ),
+                    crate::meta::example_hash_distance(),
+                    crate::meta::composed_near_duplicates(),
+                    crate::meta::composed_thumbnail_audit(),
+                    crate::meta::composed_reencode_audit(),
                 ]),
             ],
             views: Vec::new(),

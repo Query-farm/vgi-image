@@ -26,6 +26,78 @@ pub fn sample_png_expr() -> String {
     format!("from_hex('{SAMPLE_PNG_HEX}')")
 }
 
+/// Build `from_hex('<png>')` for the second, visually distinct 4×4 sample PNG
+/// ([`SAMPLE_PNG_HEX_B`]).
+pub fn sample_png_b_expr() -> String {
+    format!("from_hex('{SAMPLE_PNG_HEX_B}')")
+}
+
+/// A `(description, sql)` example pair, as fed to [`example_queries_tag`].
+pub type Example = (&'static str, String);
+
+/// `phash_distance` over two hashes that should match: an image and its
+/// lossless BMP re-encode. Shared by the schema list, `phash_distance`'s own
+/// examples and the executable bundle so the SQL is defined once.
+pub fn example_hash_distance() -> Example {
+    (
+        "Hamming distance between the phash of a PNG and the phash of its lossless BMP \
+         re-encode: 0 of 64 bits, so the copy is perceptually identical.",
+        format!(
+            "SELECT img.main.phash_distance(img.main.phash({png}), img.main.phash(img.main.convert({png}, 'bmp'))) AS distance;",
+            png = sample_png_expr()
+        ),
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Composed examples: each combines several of the worker's functions in one
+// query a real user would write. Each is defined once here and referenced from
+// the schema-level list and from the example list of the function that drives
+// the query (the agent simulator only sees per-function examples).
+// ---------------------------------------------------------------------------
+
+/// Near-duplicate detection over a small image set (convert + phash +
+/// phash_distance): hash each image once, then rank every pair by distance.
+pub fn composed_near_duplicates() -> Example {
+    (
+        "Find near-duplicates in a set of images: hash each image once with phash, then rank \
+         every pair by phash_distance. The BMP re-encode of a.png scores 0 against it; the \
+         unrelated b.png is 17 bits away from both.",
+        format!(
+            "WITH images(name, data) AS (SELECT 'a.png', {a} UNION ALL SELECT 'b.png', {b} UNION ALL SELECT 'a_copy.bmp', img.main.convert({a}, 'bmp')), hashed AS (SELECT name, img.main.phash(data) AS h FROM images) SELECT x.name AS image, y.name AS other, img.main.phash_distance(x.h, y.h) AS distance FROM hashed x JOIN hashed y ON x.name < y.name ORDER BY distance, image, other;",
+            a = sample_png_expr(),
+            b = sample_png_b_expr()
+        ),
+    )
+}
+
+/// Thumbnail audit (thumbnail_fit + image_info): shrink an image, then read the
+/// original's and the thumbnail's headers side by side.
+pub fn composed_thumbnail_audit() -> Example {
+    (
+        "Shrink a 4x4 PNG into a 2x2 box with thumbnail_fit and check the result with \
+         image_info: the original reports 4x4, the thumbnail png at 2x2.",
+        format!(
+            "WITH src AS (SELECT {b} AS data), sizes AS (SELECT img.main.image_info(data) AS original, img.main.image_info(img.main.thumbnail_fit(data, 2, 2, 'png')) AS thumb FROM src) SELECT original.width AS original_width, original.height AS original_height, thumb.format AS thumb_format, thumb.width AS thumb_width, thumb.height AS thumb_height FROM sizes;",
+            b = sample_png_b_expr()
+        ),
+    )
+}
+
+/// Re-encode audit (convert + image_info + phash + phash_distance): convert a
+/// PNG to JPEG, then confirm format, size, byte cost and visual fidelity.
+pub fn composed_reencode_audit() -> Example {
+    (
+        "Re-encode a 4x4 PNG as JPEG and audit the copy: image_info confirms the jpeg format \
+         and 4-pixel width, octet_length compares byte sizes, and a phash_distance of 1 bit \
+         shows it still looks the same.",
+        format!(
+            "WITH src AS (SELECT {b} AS original), copies AS (SELECT original, img.main.convert(original, 'jpeg') AS jpeg FROM src) SELECT (img.main.image_info(jpeg)).format AS format, (img.main.image_info(jpeg)).width AS width, octet_length(original) AS png_bytes, octet_length(jpeg) AS jpeg_bytes, img.main.phash_distance(img.main.phash(original), img.main.phash(jpeg)) AS phash_distance FROM copies;",
+            b = sample_png_b_expr()
+        ),
+    )
+}
+
 /// Build the `vgi.agent_test_tasks` suite (VGI152/VGI920) as a JSON string.
 ///
 /// Each task is a natural-language prompt; its canonical `reference_sql` (and
@@ -58,7 +130,9 @@ pub fn agent_test_tasks_json() -> String {
   {"name": "images_are_different", "prompt": "You are given two images as hex byte strings. First image: __HEX__. Second image: __HEXB__. Compute the phash (perceptual hash) of each image separately, pass those two hash values into the phash_distance function to get the Hamming distance between them, and answer whether the two images are perceptually different (is that distance greater than zero). Return a single boolean."},
   {"name": "thumbnail_is_jpeg", "prompt": "Generate a thumbnail of the image whose raw bytes are the hex string __HEX__ using the function's default settings, then confirm whether the resulting thumbnail is a JPEG image. Return a single boolean."},
   {"name": "sized_thumbnail_is_png", "prompt": "Generate a 32x32 PNG thumbnail of the image whose raw bytes are the hex string __HEX__ (choose the size and format explicitly), then confirm whether the resulting thumbnail is a PNG image. Return a single boolean."},
-  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then confirm whether the converted image is in BMP format. Return a single boolean."}
+  {"name": "convert_to_bmp", "prompt": "Convert the image whose raw bytes are the hex string __HEX__ to BMP, then confirm whether the converted image is in BMP format. Return a single boolean."},
+  {"name": "default_thumbnail_size", "prompt": "Generate the default thumbnail (the thumbnail function with no options) of the image whose raw bytes are the hex string __HEXB__, then inspect that thumbnail and return exactly one row with three columns: format (VARCHAR, e.g. 'jpeg'), width (INTEGER pixels), height (INTEGER pixels)."},
+  {"name": "thumbnail_hash_drift", "prompt": "Shrink the image whose raw bytes are the hex string __HEXB__ into a 2x2 PNG thumbnail, then return how many of the 64 perceptual-hash (phash) bits differ between the original image and that thumbnail, as a single INTEGER."}
 ]"#;
     TEMPLATE
         .replace("__HEXB__", SAMPLE_PNG_HEX_B)
@@ -107,6 +181,19 @@ pub fn example_queries_tag(examples: &[(&str, String)]) -> (String, String) {
         "vgi.example_queries".to_string(),
         format!("[{}]", items.join(",")),
     )
+}
+
+/// Turn `(description, sql)` pairs into the native `FunctionExample` list, so an
+/// object's `examples` and its `vgi.example_queries` tag come from one source.
+pub fn function_examples(examples: &[Example]) -> Vec<vgi::FunctionExample> {
+    examples
+        .iter()
+        .map(|(desc, sql)| vgi::FunctionExample {
+            sql: sql.clone(),
+            description: (*desc).into(),
+            expected_output: None,
+        })
+        .collect()
 }
 
 /// Build the four standard per-object discovery/description tags.

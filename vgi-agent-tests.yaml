@@ -40,3 +40,9 @@ tasks:
   - name: convert_to_bmp
     reference_sql: "SELECT (img.main.image_info(img.main.convert(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'), 'bmp'))).format = 'bmp' AS is_bmp"
     ignore_column_names: true
+  - name: default_thumbnail_size
+    reference_sql: "SELECT t.format, t.width, t.height FROM (SELECT img.main.image_info(img.main.thumbnail(from_hex('89504e470d0a1a0a0000000d4948445200000004000000040802000000269309290000002e4944415478da1d864901003008c3f246045ad0819acac355c778e4c0c0e1efaba4aa22a627ba6332130bb4f2de03fd2e1413e2c4ad370000000049454e44ae426082'))) AS t) s"
+    ignore_column_names: true
+  - name: thumbnail_hash_drift
+    reference_sql: "SELECT img.main.phash_distance(img.main.phash(from_hex('89504e470d0a1a0a0000000d4948445200000004000000040802000000269309290000002e4944415478da1d864901003008c3f246045ad0819acac355c778e4c0c0e1efaba4aa22a627ba6332130bb4f2de03fd2e1413e2c4ad370000000049454e44ae426082')), img.main.phash(img.main.thumbnail_fit(from_hex('89504e470d0a1a0a0000000d4948445200000004000000040802000000269309290000002e4944415478da1d864901003008c3f246045ad0819acac355c778e4c0c0e1efaba4aa22a627ba6332130bb4f2de03fd2e1413e2c4ad370000000049454e44ae426082'), 2, 2, 'png'))) AS distance"
+    ignore_column_names: true

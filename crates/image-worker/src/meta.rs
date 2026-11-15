@@ -20,6 +20,20 @@ pub const SAMPLE_PNG_HEX: &str = "89504e470d0a1a0a0000000d4948445200000002000000
 /// non-zero value (not a trivial 0 the analyst could shortcut without querying).
 pub const SAMPLE_PNG_HEX_B: &str = "89504e470d0a1a0a0000000d4948445200000004000000040802000000269309290000002e4944415478da1d864901003008c3f246045ad0819acac355c778e4c0c0e1efaba4aa22a627ba6332130bb4f2de03fd2e1413e2c4ad370000000049454e44ae426082";
 
+/// A small geotagged JPEG committed in this repo (four EXIF GPS tags,
+/// 37°48'30"N 122°25'9"W), read over HTTPS from a released tag so EXIF
+/// examples show real output for any user, outside the repo. The inline
+/// sample PNGs carry no EXIF at all, so `exif`/`exif_gps` examples on them
+/// only ever returned an empty map / NULL.
+pub const SAMPLE_GPS_JPEG_URL: &str =
+    "https://raw.githubusercontent.com/Query-farm/vgi-image/v0.4.0/test/sql/data/gps.jpg";
+
+/// Build `read_blob('<url>')` for [`SAMPLE_GPS_JPEG_URL`] — a one-row table with
+/// the geotagged sample JPEG in its `content` column.
+pub fn sample_gps_jpeg_from() -> String {
+    format!("read_blob('{SAMPLE_GPS_JPEG_URL}')")
+}
+
 /// Build `from_hex('<png>')` — an inline DuckDB BLOB expression that decodes to a
 /// tiny valid PNG. Use inside example SQL where an image BLOB is required.
 pub fn sample_png_expr() -> String {

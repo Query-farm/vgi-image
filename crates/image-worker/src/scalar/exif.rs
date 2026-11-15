@@ -27,10 +27,11 @@ impl ScalarFunction for Exif {
 
     fn metadata(&self) -> FunctionMetadata {
         let example_sql = format!(
-            "SELECT img.main.exif({})['Make'] AS camera_make;",
-            crate::meta::sample_png_expr()
+            "SELECT img.main.exif(content) AS exif FROM {};",
+            crate::meta::sample_gps_jpeg_from()
         );
-        let example_desc = "Read the camera make from an image's EXIF metadata map.";
+        let example_desc = "Read every EXIF tag of a geotagged sample JPEG as a name-to-value \
+                            map (here its four GPS tags).";
         let mut tags = crate::meta::object_tags(
             "Extract EXIF Metadata Map",
             "Extract EXIF metadata from an image `BLOB` as a `MAP(VARCHAR, VARCHAR)` of \
@@ -108,8 +109,9 @@ impl ScalarFunction for ExifGps {
 
     fn metadata(&self) -> FunctionMetadata {
         let example_sql = format!(
-            "SELECT (img.main.exif_gps({})).lat;",
-            crate::meta::sample_png_expr()
+            "SELECT (img.main.exif_gps(content)).lat AS lat, (img.main.exif_gps(content)).lon \
+             AS lon FROM {};",
+            crate::meta::sample_gps_jpeg_from()
         );
         let example_desc = "Extract decimal latitude and longitude from a geotagged \
                             image's EXIF GPS block.";

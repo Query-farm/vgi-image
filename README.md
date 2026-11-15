@@ -16,7 +16,7 @@ DuckDB launches and talks to over Apache Arrow. You `ATTACH` it and call its
 functions like any other.
 
 ```sql
-ATTACH 'img' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-image@v0.4.0');
+ATTACH 'img' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-image@v0.4.1');
 SET search_path = 'img.main';
 
 SELECT image_info(data).* FROM read_blob('photos/*.jpg');
@@ -33,7 +33,7 @@ Every [GitHub release](https://github.com/Query-farm/vgi-image/releases) ships a
 INSTALL vgi FROM community;
 LOAD vgi;
 
-ATTACH 'img' AS img (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-image@v0.4.0');
+ATTACH 'img' AS img (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-image@v0.4.1');
 
 -- Decode an image BLOB's header and read its detected format.
 SELECT (img.main.image_info(from_hex('89504e470d0a1a0a0000000d4948445200000002000000020802000000fdd49a73000000164944415478da6360608812608862601088121088020009be01a9f633974e0000000049454e44ae426082'))).format;
@@ -44,14 +44,14 @@ SELECT img.main.phash(from_hex('89504e470d0a1a0a0000000d494844520000000200000002
 
 DuckDB's built-in `read_blob('*.jpg')` is the easy way to get image bytes into a `BLOB` column to feed these functions.
 
-Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.4.0` to move to a newer release.
+Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.4.1` to move to a newer release.
 
 ### Other ways to run it
 
 - **Docker** (the image bundles the worker; needs a container runtime):
 
   ```sql
-  ATTACH 'img' AS img (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-image:0.4.0');
+  ATTACH 'img' AS img (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-image:0.4.1');
   ```
 
 - **Manual download.** Download the archive for your platform from the [releases page](https://github.com/Query-farm/vgi-image/releases), verify it against its `.sha256` file (a cosign `.cosign.bundle` is published alongside), unpack it, and set `LOCATION` to the path of the extracted worker executable.
@@ -107,7 +107,13 @@ FROM read_blob('photos/*');
 ### `exif` / `exif_gps` — metadata
 
 ```sql
--- Pull a couple of well-known tags out of the EXIF map:
+-- Try it on the geotagged sample JPEG committed in this repo:
+SELECT exif(content) AS tags, exif_gps(content) AS gps
+FROM read_blob('https://raw.githubusercontent.com/Query-farm/vgi-image/v0.4.0/test/sql/data/gps.jpg');
+-- tags: {GPSLatitudeRef=N, GPSLatitude=37 deg 48 min 30 sec N, GPSLongitudeRef=W, GPSLongitude=122 deg 25 min 9 sec W}
+-- gps:  {'lat': 37.808333, 'lon': -122.419167}
+
+-- On your own photos, pull a couple of well-known tags out of the EXIF map:
 SELECT
   exif(content)['Model']       AS camera,
   exif(content)['DateTime']    AS shot_at,

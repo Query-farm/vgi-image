@@ -11,7 +11,7 @@ members = [
 default-members = ["crates/image-worker"]
 
 [workspace.package]
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 rust-version = "1.97"
 license = "MIT"
@@ -25,7 +25,7 @@ repository = "https://github.com/Query-farm/vgi-image"
 # build takes the SDK's real defaults (`sqlite` + `transport-http`), while the
 # wasm build must NOT — tokio/mio/axum and bundled SQLite do not compile for
 # wasm32, and the browser transport serves over a byte channel rather than HTTP.
-vgi = { version = "0.51.0", default-features = false }
+vgi = { version = "0.51.1", default-features = false }
 vgi-rpc = { version = "0.32.4", default-features = false, features = ["macros"] }
 arrow-array = "59.2"
 arrow-buffer = "59.2"

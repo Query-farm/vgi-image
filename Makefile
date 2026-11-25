@@ -9,7 +9,7 @@
 #   make fixtures     # regenerate the committed test/sql/data/* images
 #
 # The SQL E2E suite drives the compiled worker through DuckDB via
-# `haybarn-unittest` (install with: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`;
+# `haybarn-unittest` (install with: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.1rc3,<2.1'`;
 # haybarn 2.0 is required: the worker speaks VGI protocol vgi.v3 / 3.3).
 
 # Path to the released worker binary handed to DuckDB as the ATTACH LOCATION.

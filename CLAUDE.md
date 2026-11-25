@@ -13,7 +13,7 @@ Built on the `vgi` crate (crates.io), modeled on `vgi-fixedformat` /
 ## Layout
 
 ```
-Cargo.toml                         workspace; pins vgi = "0.51.0", arrow 59 (VGI protocol 3.3 → haybarn 2.0)
+Cargo.toml                         workspace; pins vgi = "0.53.2", arrow 59 (VGI protocol 3.4 → haybarn 2.0)
 crates/image-worker/
   src/main.rs                      Worker::new(); registers scalars
   src/imaging.rs                   PURE logic (no Arrow): decode/exif/gps/hash/thumbnail/convert + unit tests
@@ -83,7 +83,7 @@ make test                     # cargo test + sql
 
 `make test-sql` runs `cargo build --release` then points
 `VGI_IMAGE_WORKER="$(pwd)/target/release/image-worker"` and runs
-`haybarn-unittest --keep-home --test-dir . "test/sql/*"` (install once: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`). CI runs fmt/clippy/build/test plus an `e2e-sql` job.
+`haybarn-unittest --keep-home --test-dir . "test/sql/*"` (install once: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.1rc3,<2.1'`). CI runs fmt/clippy/build/test plus an `e2e-sql` job.
 
 ## Function surface
 
